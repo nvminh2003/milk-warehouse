@@ -8,20 +8,27 @@ const LoginPage = () => {
     const [loading, setLoading] = useState(false);
 
     const onFinish = async (values) => {
+        console.log("Login attempt with:", values); // Debug log
         setLoading(true);
         try {
             // Simulate login API call
             await new Promise(resolve => setTimeout(resolve, 1000));
 
-            // Mock login success
-            if (values.username === "admin" && values.password === "123456") {
+            // Mock login success (trim whitespace)
+            if (values.username.trim() === "admin" && values.password.trim() === "123456") {
                 localStorage.setItem("token", "mock-token");
+                console.log("Login successful, token saved"); // Debug log
                 message.success("Đăng nhập thành công!");
-                window.location.href = "/admin/dashboard";
+                // Use setTimeout to ensure message is shown before redirect
+                setTimeout(() => {
+                    window.location.href = "/admin/dashboard";
+                }, 500);
             } else {
+                console.log("Login failed: wrong credentials"); // Debug log
                 message.error("Tên đăng nhập hoặc mật khẩu không đúng!");
             }
         } catch (error) {
+            console.error("Login error:", error); // Debug log
             message.error("Có lỗi xảy ra khi đăng nhập!");
         } finally {
             setLoading(false);

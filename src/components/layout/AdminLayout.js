@@ -4,8 +4,9 @@ import HeaderBar from "./HeaderBar";
 
 const AdminLayout = ({ children }) => {
     const handleLogout = () => {
-        // Xử lý đăng xuất ở đây (ví dụ: xóa token, chuyển trang)
-        window.location.href = "/auth/login";
+        // Xóa token và chuyển về trang login
+        localStorage.removeItem("token");
+        window.location.href = "/login";
     };
     return (
         <div style={{ minHeight: "100vh", background: "#f5f5f5" }}>
