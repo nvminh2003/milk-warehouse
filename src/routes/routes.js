@@ -7,11 +7,16 @@ import Orders from "../pages/Orders";
 import Reports from "../pages/Reports";
 import Settings from "../pages/Settings";
 import LoginPage from "../pages/LoginPage";
+import ForgotPasswordPage from "../pages/ForgotPasswordPage";
 
 export const routes = [
     {
         path: "/login",
         page: LoginPage,
+    },
+    {
+        path: "/forgot-password",
+        page: ForgotPasswordPage,
     },
     {
         path: "/",

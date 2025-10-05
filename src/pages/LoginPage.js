@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Form, Input, Button, message, Typography } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
+import { Link } from "react-router-dom";
 
 const { Title, Text } = Typography;
 
@@ -151,9 +152,11 @@ const LoginPage = () => {
                         </Form.Item>
 
                         <div style={{ textAlign: "right", marginBottom: 16 }}>
-                            <Button type="link" style={{ padding: 0 }}>
-                                Quên mật khẩu?
-                            </Button>
+                            <Link to="/forgot-password">
+                                <Button type="link" style={{ padding: 0 }}>
+                                    Quên mật khẩu?
+                                </Button>
+                            </Link>
                         </div>
 
                         <Form.Item style={{ marginBottom: 16 }}>
