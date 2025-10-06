@@ -10,6 +10,7 @@ import {
     UsergroupAddOutlined,
     ClusterOutlined,
     AppstoreOutlined,
+    ContainerOutlined,
 } from "@ant-design/icons";
 import { Link, useLocation } from "react-router-dom";
 import { ComponentIcon } from "../../components/IconComponent/Icon";
@@ -42,15 +43,20 @@ const Sidebar = ({ collapsed, isMobile }) => {
             children: [
                 {
                     key: "/admin/areas",
-                    icon:<AppstoreOutlined/>,
+                    icon: <AppstoreOutlined />,
                     label: "Quản lý khu vực",
                 },
                 {
                     key: "/admin/locations",
-                    icon:<ClusterOutlined/>,
+                    icon: <ClusterOutlined />,
                     label: "Quản lý vị trí",
                 },
             ],
+        },
+        {
+            key: "/admin/batch",
+            icon: <ContainerOutlined />,
+            label: "Quản lý lô hàng",
         },
         {
             key: "/admin/dashboard",

@@ -12,6 +12,7 @@ import LoginPage from "../pages/AuthenticationPage/LoginPage/LoginPage";
 import ForgotPasswordPage from "../pages/AuthenticationPage/ForgotPasswordPage";
 import Accounts from "../pages/AccountPage/AccountList"
 import CategoryList from "../pages/CategoryPage/CategoryList";
+import BatchList from "../pages/BatchPage/BatchList";
 
 export const routes = [
     {
@@ -94,6 +95,15 @@ export const routes = [
         page: () => (
             <AdminLayout>
                 <Locations />
+            </AdminLayout>
+        ),
+        isShowHeader: true,
+    },
+    {
+        path: "/admin/batch",
+        page: () => (
+            <AdminLayout>
+                <BatchList />
             </AdminLayout>
         ),
         isShowHeader: true,
