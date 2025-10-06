@@ -1,18 +1,12 @@
 import React from "react";
-import { LogoutOutlined, UserOutlined, BellOutlined } from "@ant-design/icons";
-import { Avatar } from "antd";
+import { LogoutOutlined, BellOutlined, StarOutlined, MenuOutlined, MenuFoldOutlined } from "@ant-design/icons";
 
-const user = {
-    name: "Nguyễn Văn A",
-    avatar: null // Có thể thay bằng link ảnh nếu có
-};
-
-const HeaderBar = ({ onLogout }) => {
+const HeaderBar = ({ onLogout, onToggleSidebar, sidebarCollapsed }) => {
     return (
         <div
             style={{
                 height: 64,
-                background: "#fff",
+                background: "#7D7D7F",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
@@ -23,17 +17,39 @@ const HeaderBar = ({ onLogout }) => {
                 zIndex: 100,
             }}
         >
-            <div style={{ display: "flex", alignItems: "center" }}>
-                <Avatar icon={<UserOutlined />} src={user.avatar} style={{ marginRight: 8 }} />
-                <span style={{ fontWeight: 500, fontSize: 16 }}>{user.name}</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div
+                    onClick={onToggleSidebar}
+                    style={{
+                        cursor: "pointer",
+                        padding: "8px",
+                        borderRadius: "4px",
+                        transition: "background-color 0.2s",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center"
+                    }}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = "rgba(255,255,255,0.1)"}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = "transparent"}
+                >
+                    {sidebarCollapsed ? (
+                        <MenuOutlined style={{ fontSize: 18, color: "white" }} />
+                    ) : (
+                        <MenuFoldOutlined style={{ fontSize: 18, color: "white" }} />
+                    )}
+                </div>
+                <StarOutlined style={{ fontSize: 20, color: "white" }} />
+                <span style={{ fontWeight: 600, fontSize: 18, color: "white" }}>
+                    Kho Phân Phối Sữa
+                </span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
                 <BellOutlined
-                    style={{ fontSize: 22, color: "#1890ff", cursor: "pointer" }}
+                    style={{ fontSize: 22, color: "white", cursor: "pointer" }}
                     title="Thông báo"
                 />
                 <LogoutOutlined
-                    style={{ fontSize: 22, color: "#ff4d4f", cursor: "pointer" }}
+                    style={{ fontSize: 22, color: "white", cursor: "pointer" }}
                     title="Đăng xuất"
                     onClick={onLogout}
                 />

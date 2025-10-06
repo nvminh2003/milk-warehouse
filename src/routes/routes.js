@@ -6,7 +6,9 @@ import Products from "../pages/Products";
 import Orders from "../pages/Orders";
 import Reports from "../pages/Reports";
 import Settings from "../pages/Settings";
-import LoginPage from "../pages/LoginPage";
+import Areas from "../pages/Areas";
+import Locations from "../pages/Locations";
+import LoginPage from "../pages/LoginPage/LoginPage";
 import ForgotPasswordPage from "../pages/ForgotPasswordPage";
 
 export const routes = [
@@ -72,6 +74,24 @@ export const routes = [
         page: () => (
             <AdminLayout>
                 <Settings />
+            </AdminLayout>
+        ),
+        isShowHeader: true,
+    },
+    {
+        path: "/admin/areas",
+        page: () => (
+            <AdminLayout>
+                <Areas />
+            </AdminLayout>
+        ),
+        isShowHeader: true,
+    },
+    {
+        path: "/admin/locations",
+        page: () => (
+            <AdminLayout>
+                <Locations />
             </AdminLayout>
         ),
         isShowHeader: true,
