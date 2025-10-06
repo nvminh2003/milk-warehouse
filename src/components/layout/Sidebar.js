@@ -32,7 +32,7 @@ const Sidebar = ({ collapsed, isMobile }) => {
         },
         {
             key: "/sales-manager/goods",
-            icon: <ComponentIcon name="milk" size={15} />,
+            icon: <ComponentIcon name="milk" size={15} collapsed={collapsed} />,
             label: "Quản lý sản phẩm",
         },
         {
@@ -158,13 +158,13 @@ const Sidebar = ({ collapsed, isMobile }) => {
                                 return {
                                     ...item,
                                     icon: renderIcon(item.icon, isActive),
-                                    label: <span style={{ color: "white" }}>{item.label}</span>,
+                                    label: collapsed ? null : <span style={{ color: "white" }}>{item.label}</span>,
                                     children: item.children.map((sub) => ({
                                         ...sub,
                                         icon: sub.icon
                                             ? renderIcon(sub.icon, location.pathname === sub.key)
                                             : null,
-                                        label: (
+                                        label: collapsed ? null : (
                                             <Link
                                                 to={sub.key}
                                                 style={{
@@ -185,7 +185,7 @@ const Sidebar = ({ collapsed, isMobile }) => {
                             return {
                                 ...item,
                                 icon: renderIcon(item.icon, isActive),
-                                label: (
+                                label: collapsed ? null : (
                                     <Link
                                         to={item.key}
                                         style={{
