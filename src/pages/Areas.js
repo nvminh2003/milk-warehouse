@@ -6,7 +6,7 @@ const { Search } = Input;
 const { Option } = Select;
 
 const Areas = () => {
-    // Dữ liệu cứng cho khu vực
+    // Dữ liệu cứng cho khu vực fffff
     const areas = [
         {
             id: 1,
