@@ -6,7 +6,7 @@ import Products from "../pages/Products";
 import Orders from "../pages/Orders";
 import Reports from "../pages/Reports";
 import Settings from "../pages/Settings";
-import LoginPage from "../pages/LoginPage";
+import LoginPage from "../pages/AuthenticationPage/LoginPage/LoginPage";
 
 export const routes = [
     {
