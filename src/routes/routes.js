@@ -11,6 +11,7 @@ import Locations from "../pages/AreaAndLocationPage/Locations";
 import LoginPage from "../pages/AuthenticationPage/LoginPage/LoginPage";
 import ForgotPasswordPage from "../pages/AuthenticationPage/ForgotPasswordPage";
 import Accounts from "../pages/AccountPage/AccountList"
+import CategoryList from "../pages/CategoryPage/CategoryList";
 
 export const routes = [
     {
@@ -97,7 +98,7 @@ export const routes = [
         ),
         isShowHeader: true,
     },
-     {
+    {
         path: "/admin/accounts",
         page: () => (
             <AdminLayout>
@@ -105,6 +106,10 @@ export const routes = [
             </AdminLayout>
         ),
         isShowHeader: true,
+    },
+    {
+        path: "/categories",
+        page: CategoryList,
     },
     { path: "*", page: NotFoundPage },
 ];
