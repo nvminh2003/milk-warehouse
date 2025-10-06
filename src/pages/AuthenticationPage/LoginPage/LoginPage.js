@@ -1,5 +1,5 @@
-import { LoginForm } from "../../components/AuthenticationComponent/LoginForm"
-import image from "../../asset/backgroudlogin.png";
+import { LoginForm } from "../../../components/AuthenticationComponent/LoginForm"
+import image from "../../../asset/backgroudlogin.png";
 
 export default function LoginPage() {
     return (
