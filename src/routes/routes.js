@@ -10,6 +10,7 @@ import Areas from "../pages/AreaAndLocationPage/Areas";
 import Locations from "../pages/AreaAndLocationPage/Locations";
 import LoginPage from "../pages/AuthenticationPage/LoginPage/LoginPage";
 import ForgotPasswordPage from "../pages/AuthenticationPage/ForgotPasswordPage";
+import Accounts from "../pages/AccountPage/AccountList"
 
 export const routes = [
     {
@@ -92,6 +93,15 @@ export const routes = [
         page: () => (
             <AdminLayout>
                 <Locations />
+            </AdminLayout>
+        ),
+        isShowHeader: true,
+    },
+     {
+        path: "/admin/accounts",
+        page: () => (
+            <AdminLayout>
+                <Accounts />
             </AdminLayout>
         ),
         isShowHeader: true,
