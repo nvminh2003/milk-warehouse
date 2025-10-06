@@ -3,6 +3,7 @@ import { Button } from "../ui/button"
 import { Input } from "../ui/input"
 import { Label } from "../ui/label"
 import { Checkbox } from "../ui/checkbox"
+import { Link } from "react-router-dom";
 
 export function LoginForm() {
     const [email, setEmail] = useState("")
@@ -62,9 +63,12 @@ export function LoginForm() {
                         <Label htmlFor="password" className="text-sm font-medium text-foreground">
                             Mật khẩu
                         </Label>
-                        <a href="#" className="text-sm text-primary hover:underline">
+                        <Link
+                            to="/forgot-password"
+                            className="text-sm text-primary hover:underline"
+                        >
                             Quên mật khẩu?
-                        </a>
+                        </Link>
                     </div>
                     <Input
                         id="password"
