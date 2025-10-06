@@ -6,12 +6,12 @@ const HeaderBar = ({ onLogout, onToggleSidebar, sidebarCollapsed }) => {
         <div
             style={{
                 height: 64,
-                background: "#7D7D7F",
+                background: "#237486",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
                 padding: "0 24px",
-                boxShadow: "0 2px 8px #f0f1f2",
+                boxShadow: "0 1px 1px #f0f1f2",
                 position: "sticky",
                 top: 0,
                 zIndex: 100,

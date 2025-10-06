@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import Sidebar from "./SidebarAntd";
+import Sidebar from "./Sidebar";
 import HeaderBar from "./HeaderBar";
 
 const AdminLayout = ({ children }) => {
@@ -40,7 +40,6 @@ const AdminLayout = ({ children }) => {
             />
             <Sidebar collapsed={sidebarCollapsed} isMobile={isMobile} />
 
-            {/* Overlay cho mobile */}
             {isMobile && !sidebarCollapsed && (
                 <div
                     style={{
@@ -59,8 +58,7 @@ const AdminLayout = ({ children }) => {
             <main
                 style={{
                     padding: isMobile ? 16 : 24,
-                    paddingLeft: isMobile ? 16 : (sidebarCollapsed ? 100 : 300), // Điều chỉnh theo trạng thái sidebar
-                    // marginTop: 64, // Để tránh bị header che
+                    paddingLeft: isMobile ? 16 : (sidebarCollapsed ? 100 : 300), 
                     transition: 'padding-left 0.3s ease-in-out, padding 0.3s ease-in-out',
                     minHeight: 'calc(100vh - 64px)',
                 }}

@@ -1,15 +1,15 @@
 
 import AdminLayout from "../components/layout/AdminLayout";
 import NotFoundPage from "../pages/NotFoundPage";
-import Dashboard from "../pages/Dashboard";
-import Products from "../pages/Products";
+import Dashboard from "../pages/AccountPage/Dashboard";
+import Products from "../pages/GoodPage/GoodsList";
 import Orders from "../pages/Orders";
 import Reports from "../pages/Reports";
 import Settings from "../pages/Settings";
-import Areas from "../pages/Areas";
-import Locations from "../pages/Locations";
-import LoginPage from "../pages/LoginPage/LoginPage";
-import ForgotPasswordPage from "../pages/ForgotPasswordPage";
+import Areas from "../pages/AreaAndLocationPage/Areas";
+import Locations from "../pages/AreaAndLocationPage/Locations";
+import LoginPage from "../pages/AuthenticationPage/LoginPage/LoginPage";
+import ForgotPasswordPage from "../pages/AuthenticationPage/ForgotPasswordPage";
 
 export const routes = [
     {

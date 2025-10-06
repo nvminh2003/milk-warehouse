@@ -5,7 +5,7 @@ import { PlusOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 const { Search } = Input;
 const { Option } = Select;
 
-const Products = () => {
+const GoodsList = () => {
     // Dữ liệu cứng cho sản phẩm
     const products = [
         {
@@ -185,4 +185,4 @@ const Products = () => {
     );
 };
 
-export default Products;
+export default GoodsList;

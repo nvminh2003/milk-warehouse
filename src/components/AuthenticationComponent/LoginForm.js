@@ -11,13 +11,13 @@ export function LoginForm() {
 
     const handleSubmit = (e) => {
         e.preventDefault()
-        console.log("[v0] Login attempt:", { email, rememberMe })
-        // Add your authentication logic here
+        console.log("[v0] Đăng nhập:", { email, rememberMe })
+        // Thêm logic xác thực đăng nhập tại đây
     }
 
     return (
         <div className="space-y-8">
-            {/* Logo/Brand */}
+            {/* Logo / Thương hiệu */}
             <div className="space-y-3">
                 <div className="flex items-center gap-2 mb-8">
                     <div className="w-8 h-8 login-logo rounded flex items-center justify-center">
@@ -29,23 +29,27 @@ export function LoginForm() {
                             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
                         </svg>
                     </div>
-                    <span className="text-xl font-semibold text-foreground">PORTAL</span>
+                    <span className="text-xl font-semibold text-foreground">HỆ THỐNG PHÂN PHỐI KHO SỮA</span>
                 </div>
 
-                <h2 className="text-4xl font-serif text-foreground text-balance leading-tight">Sign in to your account</h2>
-                <p className="text-muted-foreground leading-relaxed">Enter your credentials to access your workspace</p>
+                <h2 className="text-4xl font-serif text-foreground text-balance leading-tight">
+                    Đăng nhập vào tài khoản của bạn
+                </h2>
+                <p className="text-muted-foreground leading-relaxed">
+                    Nhập thông tin đăng nhập để truy cập vào không gian làm việc
+                </p>
             </div>
 
-            {/* Login Form */}
+            {/* Form đăng nhập */}
             <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">
                     <Label htmlFor="email" className="text-sm font-medium text-foreground">
-                        Email address
+                        Email
                     </Label>
                     <Input
                         id="email"
                         type="email"
-                        placeholder="you@example.com"
+                        placeholder="ban@vidu.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
@@ -56,16 +60,16 @@ export function LoginForm() {
                 <div className="space-y-2">
                     <div className="flex items-center justify-between">
                         <Label htmlFor="password" className="text-sm font-medium text-foreground">
-                            Password
+                            Mật khẩu
                         </Label>
                         <a href="#" className="text-sm text-primary hover:underline">
-                            Forgot password?
+                            Quên mật khẩu?
                         </a>
                     </div>
                     <Input
                         id="password"
                         type="password"
-                        placeholder="Enter your password"
+                        placeholder="Nhập mật khẩu của bạn"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
@@ -80,7 +84,7 @@ export function LoginForm() {
                         onCheckedChange={(checked) => setRememberMe(checked)}
                     />
                     <Label htmlFor="remember" className="text-sm text-muted-foreground cursor-pointer">
-                        Remember me for 30 days
+                        Ghi nhớ đăng nhập trong 30 ngày
                     </Label>
                 </div>
 
@@ -88,28 +92,20 @@ export function LoginForm() {
                     type="submit"
                     className="w-full h-11 text-base login-button"
                 >
-                    Sign in
+                    Đăng nhập
                 </Button>
             </form>
 
-            {/* Divider */}
+            {/* Đường kẻ chia */}
             <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-border" />
                 </div>
-                <div className="relative flex justify-center text-sm">
-
-                </div>
+                <div className="relative flex justify-center text-sm" />
             </div>
 
-            {/* Social Login */}
-            <div className="grid grid-cols-2 gap-3">
-
-
-            </div>
-
-            {/* Sign up link */}
-
+            {/* Đăng nhập bằng mạng xã hội (nếu cần sau này) */}
+            <div className="grid grid-cols-2 gap-3"></div>
         </div>
     )
 }
