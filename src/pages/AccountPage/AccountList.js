@@ -323,10 +323,10 @@ export default function AdminPage() {
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-semibold text-foreground">Quản lý người dùng</h1>
           <Button 
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
+            className="bg-[#237486] hover:bg-[#1e5f6b] h-11 px-6 text-white"
             onClick={() => setIsCreateModalOpen(true)}
           >
-            <Plus className="w-4 h-10 mr-2" />
+            <Plus className="mr-2 h-4 w-4" />
             Thêm người dùng
           </Button>
         </div>
