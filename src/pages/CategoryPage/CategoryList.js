@@ -4,7 +4,7 @@ import { Card, CardContent } from "../../components/ui/card";
 import { Input } from "../../components/ui/input";
 import { Button } from "../../components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
-import { Search, ArrowUpDown, ArrowUp, ArrowDown, Plus, Edit, Trash2 } from "lucide-react";
+import { Search, Plus, Edit, Trash2, Filter, ChevronDown } from "lucide-react";
 import CreateCategory from "./CreateCategory";
 import UpdateCategory from "./UpdateCategory";
 import DeleteModal from "../../components/DeleteModal";
@@ -21,8 +21,10 @@ const Category = {
 
 export default function CategoriesPage() {
   const [searchQuery, setSearchQuery] = useState("")
-  const [sortColumn, setSortColumn] = useState(null)
-  const [sortDirection, setSortDirection] = useState("asc")
+  const [statusFilter, setStatusFilter] = useState("")
+  const [showStatusFilter, setShowStatusFilter] = useState(false)
+  const [sortField, setSortField] = useState("")
+  const [sortAscending, setSortAscending] = useState(true)
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -40,10 +42,15 @@ export default function CategoriesPage() {
   const fetchData = async (searchParams = {}) => {
     try {
       setLoading(true)
+      
+      
       const response = await getCategory({
-        search: searchParams.search !== undefined ? searchParams.search : "",
         pageNumber: searchParams.pageNumber !== undefined ? searchParams.pageNumber : 1,
-        pageSize: searchParams.pageSize !== undefined ? searchParams.pageSize : 10
+        pageSize: searchParams.pageSize !== undefined ? searchParams.pageSize : 10,
+        search: searchParams.search !== undefined ? searchParams.search : "",
+        sortField: searchParams.sortField || "",
+        sortAscending: searchParams.sortAscending !== undefined ? searchParams.sortAscending : true,
+        status: searchParams.status
       })
       
       if (response && response.data) {
@@ -69,75 +76,96 @@ export default function CategoriesPage() {
 
   // Initial load
   useEffect(() => {
-    fetchData()
+    fetchData({
+      pageNumber: 1,
+      pageSize: 10,
+      search: searchQuery || "",
+      sortField: sortField,
+      sortAscending: sortAscending,
+      status: statusFilter
+    })
   }, [])
+
+  // Close status filter dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showStatusFilter && !event.target.closest('.status-filter-dropdown')) {
+        setShowStatusFilter(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showStatusFilter])
 
   // Search with debounce
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      fetchData({ search: searchQuery || "", pageNumber: 1, pageSize: 10 })
+      fetchData({ 
+        pageNumber: 1, 
+        pageSize: 10, 
+        search: searchQuery || "", 
+        sortField: sortField,
+        sortAscending: sortAscending,
+        status: statusFilter
+      })
       setPagination(prev => ({ ...prev, pageNumber: 1, pageSize: 10 }))
     }, 500)
 
     return () => clearTimeout(timeoutId)
   }, [searchQuery])
 
-  const handleSort = (column) => {
-    if (sortColumn === column) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc")
-    } else {
-      setSortColumn(column)
-      setSortDirection("asc")
-    }
-  }
+  // Filter by status
+  useEffect(() => {
+    fetchData({ 
+      pageNumber: 1, 
+      pageSize: 10, 
+      search: searchQuery || "", 
+      sortField: sortField,
+      sortAscending: sortAscending,
+      status: statusFilter
+    })
+    setPagination(prev => ({ ...prev, pageNumber: 1, pageSize: 10 }))
+  }, [statusFilter])
 
-  const getSortIcon = (column) => {
-    if (sortColumn !== column) {
-      return <ArrowUpDown className="ml-2 h-4 w-4 inline" />
-    }
-    return sortDirection === "asc" ? (
-      <ArrowUp className="ml-2 h-4 w-4 inline" />
-    ) : (
-      <ArrowDown className="ml-2 h-4 w-4 inline" />
-    )
-  }
+  // Sort when sortField or sortAscending changes
+  useEffect(() => {
+    fetchData({ 
+      pageNumber: 1, 
+      pageSize: 10, 
+      search: searchQuery || "", 
+      sortField: sortField,
+      sortAscending: sortAscending,
+      status: statusFilter
+    })
+    setPagination(prev => ({ ...prev, pageNumber: 1, pageSize: 10 }))
+  }, [sortField, sortAscending])
 
-  const filteredAndSortedCategories = useMemo(() => {
-    // Ensure categories is always an array
-    const categoriesArray = Array.isArray(categories) ? categories : []
-    
-    const filtered = categoriesArray.filter(
-      (category) =>
-        category.categoryName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        category.description?.toLowerCase().includes(searchQuery.toLowerCase()),
-    )
-
-    if (sortColumn) {
-      filtered.sort((a, b) => {
-        const aValue = a[sortColumn]
-        const bValue = b[sortColumn]
-
-        if (typeof aValue === "string" && typeof bValue === "string") {
-          return sortDirection === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue)
-        }
-
-        if (typeof aValue === "number" && typeof bValue === "number") {
-          return sortDirection === "asc" ? aValue - bValue : bValue - aValue
-        }
-
-        return 0
-      })
-    }
-
-    return filtered
-  }, [searchQuery, sortColumn, sortDirection, categories])
+  // Remove client-side filtering since backend already handles search and filter
+  const filteredCategories = useMemo(() => {
+    // Just return the categories from API as they are already filtered
+    return Array.isArray(categories) ? categories : []
+  }, [categories])
 
   const activeCount = Array.isArray(categories) ? categories.filter((c) => c.status === 1).length : 0
   const inactiveCount = Array.isArray(categories) ? categories.filter((c) => c.status === 2).length : 0
 
   const handleCreateSuccess = () => {
-    // Refresh data after successful creation
-    fetchData()
+    // Set sort to categoryName descending to show new record at top
+    setSortField("categoryName")
+    setSortAscending(false)
+    
+    // Refresh data after successful creation with new sort
+    fetchData({
+      pageNumber: 1,
+      pageSize: 10,
+      search: searchQuery || "",
+      sortField: "categoryName",
+      sortAscending: false,
+      status: statusFilter
+    })
   }
 
   const handleUpdateClick = (category) => {
@@ -154,14 +182,39 @@ export default function CategoriesPage() {
     try {
       console.log("Deleting category:", itemToDelete)
       await deleteCategory(itemToDelete?.categoryId)
-      alert(`Đã xóa danh mục: ${itemToDelete?.categoryName || ''}`)
+      window.showToast(`Đã xóa danh mục: ${itemToDelete?.categoryName || ''}`, "success")
       setShowDeleteModal(false)
       setItemToDelete(null)
-      // Refresh data after deletion
-      fetchData()
+      
+      // Calculate if current page will be empty after deletion
+      const currentPageItemCount = categories.length
+      const willPageBeEmpty = currentPageItemCount <= 1
+      
+      // If current page will be empty and we're not on page 1, go to previous page
+      let targetPage = pagination.pageNumber
+      if (willPageBeEmpty && pagination.pageNumber > 1) {
+        targetPage = pagination.pageNumber - 1
+        setPagination(prev => ({ ...prev, pageNumber: targetPage }))
+      }
+      
+      // Refresh data after deletion, keeping current page or going to previous page if needed
+      fetchData({
+        pageNumber: targetPage,
+        pageSize: 10,
+        search: searchQuery || "",
+        sortField: sortField,
+        sortAscending: sortAscending,
+        status: statusFilter
+      })
     } catch (error) {
       console.error("Error deleting category:", error)
-      alert("Có lỗi xảy ra khi xóa danh mục")
+      
+      // Show specific error message from API
+      if (error.response && error.response.data && error.response.data.message) {
+        window.showToast(`Lỗi: ${error.response.data.message}`, "error")
+      } else {
+        window.showToast("Có lỗi xảy ra khi xóa danh mục", "error")
+      }
     }
   }
 
@@ -173,6 +226,27 @@ export default function CategoriesPage() {
   const handleDeleteCancel = () => {
     setShowDeleteModal(false)
     setItemToDelete(null)
+  }
+
+  const handleStatusFilter = (status) => {
+    setStatusFilter(status)
+    setShowStatusFilter(false)
+  }
+
+  const clearStatusFilter = () => {
+    setStatusFilter("")
+    setShowStatusFilter(false)
+  }
+
+  const handleSort = (field) => {
+    if (sortField === field) {
+      // Nếu đang sort field này, đảo ngược thứ tự
+      setSortAscending(!sortAscending)
+    } else {
+      // Nếu chưa sort field này, set field mới và mặc định ascending
+      setSortField(field)
+      setSortAscending(true)
+    }
   }
 
   return (
@@ -245,26 +319,78 @@ export default function CategoriesPage() {
                       <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-20">
                         STT
                       </TableHead>
-                      <TableHead
-                        className="cursor-pointer font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-40"
-                        onClick={() => handleSort("categoryName")}
-                      >
-                        Tên danh mục {getSortIcon("categoryName")}
+                      <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-40">
+                        <div className="flex items-center space-x-2 cursor-pointer hover:bg-white/10 rounded p-1 -m-1" onClick={() => handleSort("categoryName")}>
+                          <span>Tên danh mục</span>
+                          <div className="flex flex-col">
+                            <ChevronDown 
+                              className={`h-3 w-3 transition-colors ${
+                                sortField === "categoryName" && sortAscending 
+                                  ? 'text-white' 
+                                  : 'text-white/50'
+                              }`} 
+                              style={{ transform: 'translateY(1px)' }}
+                            />
+                            <ChevronDown 
+                              className={`h-3 w-3 transition-colors ${
+                                sortField === "categoryName" && !sortAscending 
+                                  ? 'text-white' 
+                                  : 'text-white/50'
+                              }`} 
+                              style={{ transform: 'translateY(-1px) rotate(180deg)' }}
+                            />
+                          </div>
+                        </div>
                       </TableHead>
-                      <TableHead
-                        className="cursor-pointer font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0"
-                        onClick={() => handleSort("description")}
-                      >
-                        Mô tả {getSortIcon("description")}
+                      <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0">
+                        Mô tả
                       </TableHead>
                         <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-40">
-                          Trạng thái
+                          <div className="flex items-center justify-center space-x-2">
+                            <span>Trạng thái</span>
+                            <div className="relative status-filter-dropdown">
+                              <button
+                                onClick={() => setShowStatusFilter(!showStatusFilter)}
+                                className={`p-1 rounded hover:bg-white/20 transition-colors ${
+                                  statusFilter ? 'bg-white/30' : ''
+                                }`}
+                                title="Lọc theo trạng thái"
+                              >
+                                <Filter className="h-4 w-4" />
+                              </button>
+                              
+                              {showStatusFilter && (
+                                <div className="absolute top-full right-0 mt-1 w-48 bg-white rounded-md shadow-lg border z-10">
+                                  <div className="py-1">
+                                    <button
+                                      onClick={clearStatusFilter}
+                                      className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 flex items-center justify-between"
+                                    >
+                                      Tất cả
+                                      {!statusFilter && <span className="text-[#237486]">✓</span>}
+                                    </button>
+                                    <button
+                                      onClick={() => handleStatusFilter("1")}
+                                      className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 flex items-center justify-between"
+                                    >
+                                      Hoạt động
+                                      {statusFilter === "1" && <span className="text-[#237486]">✓</span>}
+                                    </button>
+                                    <button
+                                      onClick={() => handleStatusFilter("2")}
+                                      className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 flex items-center justify-between"
+                                    >
+                                      Ngừng hoạt động
+                                      {statusFilter === "2" && <span className="text-[#237486]">✓</span>}
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </TableHead>
-                      <TableHead
-                        className="cursor-pointer font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-40"
-                        onClick={() => handleSort("createdAt")}
-                      >
-                        Ngày tạo {getSortIcon("createdAt")}
+                      <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-40">
+                        Ngày tạo
                       </TableHead>
                         <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 text-center">
                           Hoạt động
@@ -272,8 +398,8 @@ export default function CategoriesPage() {
                       </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredAndSortedCategories.length > 0 ? (
-                      filteredAndSortedCategories.map((category, index) => (
+                    {filteredCategories.length > 0 ? (
+                      filteredCategories.map((category, index) => (
                         <TableRow
                           key={index}
                           className={`
@@ -344,7 +470,14 @@ export default function CategoriesPage() {
                     size="sm"
                     onClick={() => {
                       if (pagination.pageNumber > 1) {
-                        fetchData({ pageNumber: pagination.pageNumber - 1, pageSize: 10 })
+                        fetchData({ 
+                          pageNumber: pagination.pageNumber - 1, 
+                          pageSize: 10,
+                          search: searchQuery || "",
+                          sortField: sortField,
+                          sortAscending: sortAscending,
+                          status: statusFilter
+                        })
                         setPagination(prev => ({ ...prev, pageNumber: prev.pageNumber - 1, pageSize: 10 }))
                       }
                     }}
@@ -360,7 +493,14 @@ export default function CategoriesPage() {
                     size="sm"
                     onClick={() => {
                       if (pagination.pageNumber < Math.ceil(pagination.totalCount / pagination.pageSize)) {
-                        fetchData({ pageNumber: pagination.pageNumber + 1, pageSize: 10 })
+                        fetchData({ 
+                          pageNumber: pagination.pageNumber + 1, 
+                          pageSize: 10,
+                          search: searchQuery || "",
+                          sortField: sortField,
+                          sortAscending: sortAscending,
+                          status: statusFilter
+                        })
                         setPagination(prev => ({ ...prev, pageNumber: prev.pageNumber + 1, pageSize: 10 }))
                       }
                     }}

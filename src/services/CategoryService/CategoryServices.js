@@ -3,13 +3,19 @@ import api from "../api";
 export const getCategory = async (searchParams = {}) => {
     try {
         const body = {
-            categorySearch: searchParams.search || "",
             pageNumber: searchParams.pageNumber || 1,
             pageSize: searchParams.pageSize || 10,
-            status: searchParams.status || null
+            search: searchParams.search || "",
+            sortField: searchParams.sortField || "",
+            sortAscending: searchParams.sortAscending !== undefined ? searchParams.sortAscending : true,
+            filters: searchParams.status ? { status: searchParams.status } : {}
         };
+        
+        
         const res = await api.post("/Category/Categories", body);
         console.log("Category API response:", res.data);
+        console.log("Search params received:", searchParams);
+
         return res.data;
     } catch (error) {
         console.error("Error fetching categories:", error);

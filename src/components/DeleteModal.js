@@ -1,7 +1,20 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "./ui/button";
 
 export default function DeleteModal({ isOpen, onClose, onConfirm, itemName }) {
+  const [loading, setLoading] = useState(false);
+
+  const handleConfirm = async () => {
+    try {
+      setLoading(true);
+      await onConfirm();
+    } catch (error) {
+      console.error("Error in delete confirmation:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -33,16 +46,18 @@ export default function DeleteModal({ isOpen, onClose, onConfirm, itemName }) {
             type="button"
             variant="outline"
             onClick={onClose}
-            className="flex-1 h-11 border-gray-300 text-gray-700 hover:bg-gray-50"
+            disabled={loading}
+            className="flex-1 h-11 border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
           >
             Hủy
           </Button>
           <Button 
             type="button" 
-            onClick={onConfirm} 
-            className="flex-1 h-11 bg-red-500 hover:bg-red-600 text-white"
+            onClick={handleConfirm}
+            disabled={loading}
+            className="flex-1 h-11 bg-red-500 hover:bg-red-600 text-white disabled:opacity-50"
           >
-            Xóa
+            {loading ? "Đang xóa..." : "Xóa"}
           </Button>
         </div>
       </div>

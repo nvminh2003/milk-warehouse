@@ -6,7 +6,7 @@ import { Label } from "../../components/ui/label"
 import { Card } from "../../components/ui/card"
 import { X } from "lucide-react"
 import { createCategory } from "../../services/CategoryService/CategoryServices"
-import { validateAndShowError } from "../../utils/categoryValidation"
+import { validateAndShowError } from "../../utils/Validation"
 
 export default function CreateCategory({ isOpen, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
