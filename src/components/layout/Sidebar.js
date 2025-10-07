@@ -31,6 +31,11 @@ const Sidebar = ({ collapsed, isMobile }) => {
             label: "Quản lý tài khoản",
         },
         {
+            key: "/sales-manager/categorys",
+            icon: <ComponentIcon name="category" size={15} collapsed={collapsed} />,
+            label: "Quản lý danh mục",
+        },
+        {
             key: "/sales-manager/goods",
             icon: <ComponentIcon name="milk" size={15} collapsed={collapsed} />,
             label: "Quản lý sản phẩm",
@@ -42,12 +47,12 @@ const Sidebar = ({ collapsed, isMobile }) => {
             children: [
                 {
                     key: "/admin/areas",
-                    icon:<AppstoreOutlined/>,
+                    icon: <AppstoreOutlined />,
                     label: "Quản lý khu vực",
                 },
                 {
                     key: "/admin/locations",
-                    icon:<ClusterOutlined/>,
+                    icon: <ClusterOutlined />,
                     label: "Quản lý vị trí",
                 },
             ],
@@ -77,6 +82,7 @@ const Sidebar = ({ collapsed, isMobile }) => {
             icon: <SettingOutlined />,
             label: "Cài đặt",
         },
+
     ];
 
     // Hàm render icon có màu động (đen nếu được chọn)

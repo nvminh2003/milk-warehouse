@@ -4,6 +4,7 @@ import { Icon } from "@iconify/react";
 
 export const IconMap = [
   { keywords: ['milk'], icon: 'tdesign:milk-filled' },
+  { keywords: ['category'], icon: 'mdi:category-plus-outline' },
   // có thể thêm nhiều icon khác ở đây
 ];
 

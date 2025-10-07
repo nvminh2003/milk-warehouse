@@ -1,5 +1,5 @@
 
-import AdminLayout from "../components/layout/AdminLayout";
+import Layout from "../components/layout/Layout";
 import NotFoundPage from "../pages/NotFoundPage";
 import Dashboard from "../pages/AccountPage/Dashboard";
 import Products from "../pages/GoodPage/GoodsList";
@@ -38,78 +38,82 @@ export const routes = [
     {
         path: "/admin/dashboard",
         page: () => (
-            <AdminLayout>
+            <Layout>
                 <Dashboard />
-            </AdminLayout>
+            </Layout>
         ),
         isShowHeader: true,
     },
     {
         path: "/admin/products",
         page: () => (
-            <AdminLayout>
+            <Layout>
                 <Products />
-            </AdminLayout>
+            </Layout>
         ),
         isShowHeader: true,
     },
     {
         path: "/admin/orders",
         page: () => (
-            <AdminLayout>
+            <Layout>
                 <Orders />
-            </AdminLayout>
+            </Layout>
         ),
         isShowHeader: true,
     },
     {
         path: "/admin/reports",
         page: () => (
-            <AdminLayout>
+            <Layout>
                 <Reports />
-            </AdminLayout>
+            </Layout>
         ),
         isShowHeader: true,
     },
     {
         path: "/admin/settings",
         page: () => (
-            <AdminLayout>
+            <Layout>
                 <Settings />
-            </AdminLayout>
+            </Layout>
         ),
         isShowHeader: true,
     },
     {
         path: "/admin/areas",
         page: () => (
-            <AdminLayout>
+            <Layout>
                 <Areas />
-            </AdminLayout>
+            </Layout>
         ),
         isShowHeader: true,
     },
     {
         path: "/admin/locations",
         page: () => (
-            <AdminLayout>
+            <Layout>
                 <Locations />
-            </AdminLayout>
+            </Layout>
         ),
         isShowHeader: true,
     },
     {
         path: "/admin/accounts",
         page: () => (
-            <AdminLayout>
+            <Layout>
                 <Accounts />
-            </AdminLayout>
+            </Layout>
         ),
         isShowHeader: true,
     },
     {
-        path: "/categories",
-        page: CategoryList,
+        path: "/sales-manager/categorys",
+         page: () => (
+            <Layout>
+                <CategoryList />
+            </Layout>
+        ),
     },
     { path: "*", page: NotFoundPage },
 ];
