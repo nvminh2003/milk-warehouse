@@ -5,6 +5,8 @@ import { Icon } from "@iconify/react";
 export const IconMap = [
   { keywords: ['milk'], icon: 'tdesign:milk-filled' },
   { keywords: ['category'], icon: 'mdi:category-plus-outline' },
+  { keywords: ['unitMeasure'], icon: 'fontisto:unity' },
+  
   // có thể thêm nhiều icon khác ở đây
 ];
 
@@ -13,8 +15,11 @@ export const ComponentIcon = ({ name, color = "white", size = 20, collapsed = fa
   const found = IconMap.find(item => item.keywords.includes(name));
   if (!found) return null;
   
-  // Đặc biệt xử lý cho milk icon để căn chỉnh tốt hơn
+  // Đặc biệt xử lý cho milk và unitMeasure icon để căn chỉnh tốt hơn
   const isMilkIcon = name === 'milk';
+  const isUnitMeasureIcon = name === 'unitMeasure';
+  const isCategoryIcon = name === 'category';
+  const needsSpecialAlignment = isMilkIcon || isUnitMeasureIcon ||isCategoryIcon;
   
   return (
     <Icon 
@@ -22,12 +27,12 @@ export const ComponentIcon = ({ name, color = "white", size = 20, collapsed = fa
       style={{ 
         color, 
         fontSize: size,
-        verticalAlign: isMilkIcon ? 'baseline' : 'middle',
+        verticalAlign: needsSpecialAlignment ? 'baseline' : 'middle',
         display: 'inline-block',
         lineHeight: 1,
-        marginTop: isMilkIcon ? '-1px' : '0',
-        marginRight: isMilkIcon && !collapsed ? '8px' : '0',
-        transform: isMilkIcon ? 'translateY(1px)' : 'none'
+        marginTop: needsSpecialAlignment ? '-1px' : '0',
+        marginRight: needsSpecialAlignment && !collapsed ? '8px' : '0',
+        transform: needsSpecialAlignment ? 'translateY(1px)' : 'none'
       }} 
     />
   );

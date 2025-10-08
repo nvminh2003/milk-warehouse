@@ -65,6 +65,34 @@ export const validateCategoryForm = (formData) => {
 }
 
 /**
+ * Validate unit measure form data
+ * @param {Object} formData - Dữ liệu form cần validate
+ * @param {string} formData.name - Tên đơn vị đo
+ * @param {string} formData.description - Mô tả
+ * @returns {Object} - { isValid: boolean, message: string }
+ */
+export const validateUnitMeasureForm = (formData) => {
+  // Kiểm tra các trường bắt buộc
+  if (!formData.name?.trim() || !formData.description?.trim()) {
+    return {
+      isValid: false,
+      message: "Vui lòng điền đầy đủ thông tin"
+    }
+  }
+  
+  // Validate tên đơn vị đo
+  const nameValidation = validateCategoryName(formData.name)
+  if (!nameValidation.isValid) {
+    return nameValidation
+  }
+  
+  return {
+    isValid: true,
+    message: ""
+  }
+}
+
+/**
  * Show validation error toast
  * @param {string} message - Thông báo lỗi
  */
@@ -82,7 +110,24 @@ export const showValidationError = (message) => {
  * @returns {boolean} - true nếu hợp lệ, false nếu không hợp lệ
  */
 export const validateAndShowError = (formData) => {
-  const validation = validateCategoryForm(formData)
+  // Auto-detect form type based on field names
+  let validation
+  if (formData.categoryName !== undefined) {
+    // Category form
+    validation = validateCategoryForm(formData)
+  } else if (formData.name !== undefined) {
+    // Unit measure form
+    validation = validateUnitMeasureForm(formData)
+  } else {
+    // Fallback - check for required fields
+    const hasRequiredFields = (formData.name?.trim() || formData.categoryName?.trim()) && formData.description?.trim()
+    if (!hasRequiredFields) {
+      showValidationError("Vui lòng điền đầy đủ thông tin")
+      return false
+    }
+    return true
+  }
+  
   if (!validation.isValid) {
     showValidationError(validation.message)
     return false

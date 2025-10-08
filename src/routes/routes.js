@@ -12,6 +12,7 @@ import LoginPage from "../pages/AuthenticationPage/LoginPage/LoginPage";
 import ForgotPasswordPage from "../pages/AuthenticationPage/ForgotPasswordPage";
 import Accounts from "../pages/AccountPage/AccountList"
 import CategoryList from "../pages/CategoryPage/CategoryList";
+import UnitMeasureList from "../pages/UnitMeasurePage/UnitMeasureList";
 
 export const routes = [
     {
@@ -112,6 +113,14 @@ export const routes = [
          page: () => (
             <Layout>
                 <CategoryList />
+            </Layout>
+        ),
+    },
+    {
+        path: "/sales-manager/unitMeasures",
+         page: () => (
+            <Layout>
+                <UnitMeasureList />
             </Layout>
         ),
     },

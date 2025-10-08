@@ -36,6 +36,11 @@ const Sidebar = ({ collapsed, isMobile }) => {
             label: "Quản lý danh mục",
         },
         {
+            key: "/sales-manager/unitMeasures",
+            icon: <ComponentIcon name="unitMeasure" size={15} collapsed={collapsed} />,
+            label: "Quản lý đơn vị",
+        },
+        {
             key: "/sales-manager/goods",
             icon: <ComponentIcon name="milk" size={15} collapsed={collapsed} />,
             label: "Quản lý sản phẩm",
@@ -82,6 +87,7 @@ const Sidebar = ({ collapsed, isMobile }) => {
             icon: <SettingOutlined />,
             label: "Cài đặt",
         },
+        
 
     ];
 
