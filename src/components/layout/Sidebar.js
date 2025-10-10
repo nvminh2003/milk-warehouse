@@ -43,7 +43,24 @@ const Sidebar = ({ collapsed, isMobile }) => {
         {
             key: "/sales-manager/goods",
             icon: <ComponentIcon name="milk" size={15} collapsed={collapsed} />,
-            label: "Quản lý sản phẩm",
+            label: "Quản lý hàng hóa",
+        },
+        {
+            key: "partner-management",
+            icon: <ComponentIcon name="partner" size={15} collapsed={collapsed} />,
+            label: "Quản lý đối tác",
+            children: [
+                {
+                    key: "/sales-manager/supplier",
+                    icon: <ComponentIcon name="supplier" size={15} collapsed={collapsed} />,
+                    label: "Quản lý nhà cung cấp",
+                },
+                {
+                    key: "/sales-manager/retailer",
+                    icon: <ComponentIcon name="retailer" size={15} collapsed={collapsed} />,
+                    label: "Quản lý nhà bán lẻ",
+                },
+            ],
         },
         {
             key: "location-management",
@@ -60,22 +77,17 @@ const Sidebar = ({ collapsed, isMobile }) => {
                     icon: <ClusterOutlined />,
                     label: "Quản lý vị trí",
                 },
+                {
+                    key: "/admin/storage-condition",
+                    icon: <ComponentIcon name="storageCondition" size={15} collapsed={collapsed} />,
+                    label: "Quản lý điều kiện bảo quản",
+                },
             ],
         },
         {
             key: "/admin/dashboard",
             icon: <DashboardOutlined />,
             label: "Dashboard",
-        },
-        {
-            key: "/admin/products",
-            icon: <ShoppingOutlined />,
-            label: "Sản phẩm",
-        },
-        {
-            key: "/admin/orders",
-            icon: <ShoppingCartOutlined />,
-            label: "Đơn hàng",
         },
         {
             key: "/admin/reports",
@@ -87,8 +99,6 @@ const Sidebar = ({ collapsed, isMobile }) => {
             icon: <SettingOutlined />,
             label: "Cài đặt",
         },
-        
-
     ];
 
     // Hàm render icon có màu động (đen nếu được chọn)
@@ -108,6 +118,7 @@ const Sidebar = ({ collapsed, isMobile }) => {
             <style>{arrowWhiteStyle}</style>
 
             <aside
+                className={collapsed ? "" : "sidebar-container"}
                 style={{
                     position: "fixed",
                     left: 0,
@@ -155,7 +166,7 @@ const Sidebar = ({ collapsed, isMobile }) => {
                 </div>
 
                 {/* Menu */}
-                <div style={{ flex: 1, overflowY: "auto", background: "#237486" }}>
+                <div className="sidebar-scroll" style={{ flex: 1, background: "#237486" }}>
                     <Menu
                         mode="inline"
                         selectedKeys={[location.pathname]}

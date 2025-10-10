@@ -1,30 +1,35 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { getUnitMeasure, deleteUnitMeasure, createUnitMeasure, updateUnitMeasure } from "../../services/UnitMeasureService";
-import { Card, CardContent } from "../../components/ui/card";
-import { Input } from "../../components/ui/input";
-import { Button } from "../../components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
+import { getStorageCondition, deleteStorageCondition, createStorageCondition, updateStorageCondition } from "../../../services/StorageConditionService";
+import { Card, CardContent } from "../../../components/ui/card";
+import { Input } from "../../../components/ui/input";
+import { Button } from "../../../components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../../components/ui/table";
 import { Search, Plus, Edit, Trash2, Filter, ChevronDown } from "lucide-react";
-import CreateUnitMeasure from "./CreateUnitMeasureModal";
-import UpdateUnitMeasure from "./UpdateUnitMeasureModal";
-import DeleteModal from "../../components/DeleteModal";
+import CreateStorageCondition from "./CreateStorageConditionModal";
+import UpdateStorageCondition from "./UpdateStorageConditionModal";
+import DeleteModal from "../../../components/DeleteModal";
 
-// Type definition for UnitMeasure
-const UnitMeasure = {
-  name: "",
-  description: "",
+// Type definition for StorageCondition
+const StorageCondition = {
+  storageConditionId: "",
+  temperatureMin: "",
+  temperatureMax: "",
+  humidityMin: "",
+  humidityMax: "",
+  lightLevel: "",
   status: null,
   createdAt: "",
+  updateAt: "",
 };
 
 
-export default function UnitMeasuresPage() {
+export default function StorageConditionPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("")
   const [showStatusFilter, setShowStatusFilter] = useState(false)
   const [sortField, setSortField] = useState("")
   const [sortAscending, setSortAscending] = useState(true)
-  const [unitMeasures, setUnitMeasures] = useState([])
+  const [storageConditions, setStorageConditions] = useState([])
   const [loading, setLoading] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showUpdateModal, setShowUpdateModal] = useState(false)
@@ -42,7 +47,7 @@ export default function UnitMeasuresPage() {
   const fetchData = async (searchParams = {}) => {
     try {
       setLoading(true)
-      const response = await getUnitMeasure({
+      const response = await getStorageCondition({
         pageNumber: searchParams.pageNumber !== undefined ? searchParams.pageNumber : 1,
         pageSize: searchParams.pageSize !== undefined ? searchParams.pageSize : 10,
         search: searchParams.search !== undefined ? searchParams.search : "",
@@ -51,7 +56,7 @@ export default function UnitMeasuresPage() {
         status: searchParams.status
       })
       
-      console.log("Full response from getUnitMeasure:", response);
+      console.log("Full response from getStorageCondition:", response);
       console.log("Response.data:", response?.data);
       
       if (response && response.data) {
@@ -76,19 +81,19 @@ export default function UnitMeasuresPage() {
         console.log("Parsed dataArray:", dataArray);
         console.log("Parsed totalCount:", totalCount);
         
-        setUnitMeasures(dataArray)
+        setStorageConditions(dataArray)
         setPagination(prev => ({
           ...prev,
           totalCount: totalCount
         }))
       } else {
         console.log("No response or response.data");
-        setUnitMeasures([])
+        setStorageConditions([])
         setPagination(prev => ({ ...prev, totalCount: 0 }))
       }
     } catch (error) {
-      console.error("Error fetching unit measures:", error)
-      setUnitMeasures([])
+      console.error("Error fetching storage conditions:", error)
+      setStorageConditions([])
       setPagination(prev => ({ ...prev, totalCount: 0 }))
     } finally {
       setLoading(false)
@@ -129,13 +134,13 @@ export default function UnitMeasuresPage() {
     const timeoutId = setTimeout(() => {
       fetchData({ 
         pageNumber: 1, 
-        pageSize: pagination.pageSize, 
+        pageSize: 10, 
         search: searchQuery || "", 
         sortField: sortField,
         sortAscending: sortAscending,
         status: statusFilter
       })
-      setPagination(prev => ({ ...prev, pageNumber: 1 }))
+      setPagination(prev => ({ ...prev, pageNumber: 1, pageSize: 10 }))
     }, 500)
 
     return () => clearTimeout(timeoutId)
@@ -145,36 +150,36 @@ export default function UnitMeasuresPage() {
   useEffect(() => {
     fetchData({ 
       pageNumber: 1, 
-      pageSize: pagination.pageSize, 
+      pageSize: 10, 
       search: searchQuery || "", 
       sortField: sortField,
       sortAscending: sortAscending,
       status: statusFilter
     })
-    setPagination(prev => ({ ...prev, pageNumber: 1 }))
+    setPagination(prev => ({ ...prev, pageNumber: 1, pageSize: 10 }))
   }, [statusFilter])
 
   // Sort when sortField or sortAscending changes
   useEffect(() => {
     fetchData({ 
       pageNumber: 1, 
-      pageSize: pagination.pageSize, 
+      pageSize: 10, 
       search: searchQuery || "", 
       sortField: sortField,
       sortAscending: sortAscending,
       status: statusFilter
     })
-    setPagination(prev => ({ ...prev, pageNumber: 1 }))
+    setPagination(prev => ({ ...prev, pageNumber: 1, pageSize: 10 }))
   }, [sortField, sortAscending])
 
   // Remove client-side filtering since backend already handles search and filter
-  const filteredUnitMeasures = useMemo(() => {
-    // Just return the unit measures from API as they are already filtered
-    return Array.isArray(unitMeasures) ? unitMeasures : []
-  }, [unitMeasures])
+  const filteredStorageConditions = useMemo(() => {
+    // Just return the storage conditions from API as they are already filtered
+    return Array.isArray(storageConditions) ? storageConditions : []
+  }, [storageConditions])
 
-  const activeCount = Array.isArray(unitMeasures) ? unitMeasures.filter((c) => c.status === 1).length : 0
-  const inactiveCount = Array.isArray(unitMeasures) ? unitMeasures.filter((c) => c.status === 2).length : 0
+  const activeCount = Array.isArray(storageConditions) ? storageConditions.filter((c) => c.status === 1).length : 0
+  const inactiveCount = Array.isArray(storageConditions) ? storageConditions.filter((c) => c.status === 2).length : 0
 
   const handleCreateSuccess = () => {
     // Set sort to name descending to show new record at top
@@ -184,7 +189,7 @@ export default function UnitMeasuresPage() {
     // Refresh data after successful creation with new sort
     fetchData({
       pageNumber: 1,
-      pageSize: pagination.pageSize,
+      pageSize: 10,
       search: searchQuery || "",
       sortField: "Name",
       sortAscending: false,
@@ -192,26 +197,33 @@ export default function UnitMeasuresPage() {
     })
   }
 
-  const handleUpdateClick = (unitMeasure) => {
-    setItemToUpdate(unitMeasure)
+  const handleUpdateClick = (storageCondition) => {
+    setItemToUpdate(storageCondition)
     setShowUpdateModal(true)
   }
 
-  const handleDeleteClick = (unitMeasure) => {
-    setItemToDelete(unitMeasure)
+  const handleDeleteClick = (storageCondition) => {
+    setItemToDelete(storageCondition)
     setShowDeleteModal(true)
   }
 
   const handleDeleteConfirm = async () => {
     try {
-      console.log("Deleting unit measure:", itemToDelete)
-      await deleteUnitMeasure(itemToDelete?.unitMeasureId)
-      window.showToast(`Đã xóa đơn vị đo: ${itemToDelete?.name || ''}`, "success")
+      console.log("Deleting storage condition:", itemToDelete)
+      console.log("StorageConditionId:", itemToDelete?.storageConditionId)
+      
+      if (!itemToDelete?.storageConditionId) {
+        window.showToast("Không tìm thấy ID của điều kiện bảo quản", "error")
+        return
+      }
+      
+      await deleteStorageCondition(itemToDelete?.storageConditionId)
+      window.showToast(`Đã xóa điều kiện bảo quản: ${itemToDelete?.lightLevel || ''}`, "success")
       setShowDeleteModal(false)
       setItemToDelete(null)
       
       // Calculate if current page will be empty after deletion
-      const currentPageItemCount = unitMeasures.length
+      const currentPageItemCount = storageConditions.length
       const willPageBeEmpty = currentPageItemCount <= 1
       
       // If current page will be empty and we're not on page 1, go to previous page
@@ -224,20 +236,20 @@ export default function UnitMeasuresPage() {
       // Refresh data after deletion, keeping current page or going to previous page if needed
       fetchData({
         pageNumber: targetPage,
-        pageSize: pagination.pageSize,
+        pageSize: 10,
         search: searchQuery || "",
         sortField: sortField,
         sortAscending: sortAscending,
         status: statusFilter
       })
     } catch (error) {
-      console.error("Error deleting unit measure:", error)
+      console.error("Error deleting storage condition:", error)
       
       // Show specific error message from API
       if (error.response && error.response.data && error.response.data.message) {
-        window.showToast(`Lỗi: ${error.response.data.message}`, "error")
+        window.showToast(`${error.response.data.message}`, "error")
       } else {
-        window.showToast("Có lỗi xảy ra khi xóa đơn vị đo", "error")
+        window.showToast("Có lỗi xảy ra khi xóa điều kiện bảo quản", "error")
       }
     }
   }
@@ -294,15 +306,15 @@ export default function UnitMeasuresPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Quản lý Đơn vị đo</h1>
-            <p className="text-slate-600 mt-1">Quản lý các đơn vị đo sản phẩm trong hệ thống</p>
+            <h1 className="text-3xl font-bold text-slate-900">Quản lý Điều kiện Bảo quản</h1>
+            <p className="text-slate-600 mt-1">Quản lý các điều kiện bảo quản sản phẩm trong hệ thống</p>
           </div>
           <Button 
             className="bg-[#237486] hover:bg-[#1e5f6b] h-11 px-6 text-white"
             onClick={() => setShowCreateModal(true)}
           >
             <Plus className="mr-2 h-4 w-4" />
-            Thêm đơn vị đo
+            Thêm điều kiện bảo quản
           </Button>
         </div>
 
@@ -310,7 +322,7 @@ export default function UnitMeasuresPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="border-l-4 border-l-[#237486]">
             <CardContent className="pt-6">
-              <div className="text-sm font-medium text-slate-600">Tổng đơn vị đo</div>
+              <div className="text-sm font-medium text-slate-600">Tổng điều kiện bảo quản</div>
               <div className="text-3xl font-bold text-slate-900 mt-2">{pagination.totalCount}</div>
             </CardContent>
           </Card>
@@ -334,7 +346,7 @@ export default function UnitMeasuresPage() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
               <Input
-                placeholder="Tìm kiếm theo tên hoặc mô tả đơn vị đo..."
+                placeholder="Tìm kiếm theo mức độ ánh sáng hoặc điều kiện bảo quản..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 h-12 text-base"
@@ -343,7 +355,7 @@ export default function UnitMeasuresPage() {
           </CardContent>
         </Card>
 
-        {/* Unit Measures Table */}
+        {/* Storage Conditions Table */}
         <Card className="shadow-lg overflow-hidden p-0">
           <div className="w-full">
             {loading ? (
@@ -358,13 +370,13 @@ export default function UnitMeasuresPage() {
                       <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-20">
                         STT
                       </TableHead>
-                      <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-40">
-                        <div className="flex items-center space-x-2 cursor-pointer hover:bg-white/10 rounded p-1 -m-1" onClick={() => handleSort("name")}>
-                          <span>Tên đơn vị đo</span>
+                      <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-48">
+                        <div className="flex items-center space-x-2 cursor-pointer hover:bg-white/10 rounded p-1 -m-1" onClick={() => handleSort("temperatureMin")}>
+                          <span>Nhiệt độ (°C)</span>
                           <div className="flex flex-col">
                             <ChevronDown 
                               className={`h-3 w-3 transition-colors ${
-                                sortField === "name" && sortAscending 
+                                sortField === "temperatureMin" && sortAscending 
                                   ? 'text-white' 
                                   : 'text-white/50'
                               }`} 
@@ -372,7 +384,7 @@ export default function UnitMeasuresPage() {
                             />
                             <ChevronDown 
                               className={`h-3 w-3 transition-colors ${
-                                sortField === "name" && !sortAscending 
+                                sortField === "temperatureMin" && !sortAscending 
                                   ? 'text-white' 
                                   : 'text-white/50'
                               }`} 
@@ -381,64 +393,104 @@ export default function UnitMeasuresPage() {
                           </div>
                         </div>
                       </TableHead>
-                      <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0">
-                        Mô tả
-                      </TableHead>
-                        <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-40">
-                          <div className="flex items-center justify-center space-x-2">
-                            <span>Trạng thái</span>
-                            <div className="relative status-filter-dropdown">
-                              <button
-                                onClick={() => setShowStatusFilter(!showStatusFilter)}
-                                className={`p-1 rounded hover:bg-white/20 transition-colors ${
-                                  statusFilter ? 'bg-white/30' : ''
-                                }`}
-                                title="Lọc theo trạng thái"
-                              >
-                                <Filter className="h-4 w-4" />
-                              </button>
-                              
-                              {showStatusFilter && (
-                                <div className="absolute top-full right-0 mt-1 w-48 bg-white rounded-md shadow-lg border z-10">
-                                  <div className="py-1">
-                                    <button
-                                      onClick={clearStatusFilter}
-                                      className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 flex items-center justify-between"
-                                    >
-                                      Tất cả
-                                      {!statusFilter && <span className="text-[#237486]">✓</span>}
-                                    </button>
-                                    <button
-                                      onClick={() => handleStatusFilter("1")}
-                                      className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 flex items-center justify-between"
-                                    >
-                                      Hoạt động
-                                      {statusFilter === "1" && <span className="text-[#237486]">✓</span>}
-                                    </button>
-                                    <button
-                                      onClick={() => handleStatusFilter("2")}
-                                      className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 flex items-center justify-between"
-                                    >
-                                      Ngừng hoạt động
-                                      {statusFilter === "2" && <span className="text-[#237486]">✓</span>}
-                                    </button>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
+                      <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-48">
+                        <div className="flex items-center space-x-2 cursor-pointer hover:bg-white/10 rounded p-1 -m-1" onClick={() => handleSort("humidityMin")}>
+                          <span>Độ ẩm (%)</span>
+                          <div className="flex flex-col">
+                            <ChevronDown 
+                              className={`h-3 w-3 transition-colors ${
+                                sortField === "humidityMin" && sortAscending 
+                                  ? 'text-white' 
+                                  : 'text-white/50'
+                              }`} 
+                              style={{ transform: 'translateY(1px)' }}
+                            />
+                            <ChevronDown 
+                              className={`h-3 w-3 transition-colors ${
+                                sortField === "humidityMin" && !sortAscending 
+                                  ? 'text-white' 
+                                  : 'text-white/50'
+                              }`} 
+                              style={{ transform: 'translateY(-1px) rotate(180deg)' }}
+                            />
                           </div>
-                        </TableHead>
-                      <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-40">
-                        Ngày tạo
+                        </div>
                       </TableHead>
-                        <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 text-center">
-                          Hoạt động
-                        </TableHead>
-                      </TableRow>
+                      <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-32">
+                        <div className="flex items-center space-x-2 cursor-pointer hover:bg-white/10 rounded p-1 -m-1" onClick={() => handleSort("lightLevel")}>
+                          <span>Mức độ ánh sáng</span>
+                          <div className="flex flex-col">
+                            <ChevronDown 
+                              className={`h-3 w-3 transition-colors ${
+                                sortField === "lightLevel" && sortAscending 
+                                  ? 'text-white' 
+                                  : 'text-white/50'
+                              }`} 
+                              style={{ transform: 'translateY(1px)' }}
+                            />
+                            <ChevronDown 
+                              className={`h-3 w-3 transition-colors ${
+                                sortField === "lightLevel" && !sortAscending 
+                                  ? 'text-white' 
+                                  : 'text-white/50'
+                              }`} 
+                              style={{ transform: 'translateY(-1px) rotate(180deg)' }}
+                            />
+                          </div>
+                        </div>
+                      </TableHead>
+                      <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-40">
+                        <div className="flex items-center justify-center space-x-2">
+                          <span>Trạng thái</span>
+                          <div className="relative status-filter-dropdown">
+                            <button
+                              onClick={() => setShowStatusFilter(!showStatusFilter)}
+                              className={`p-1 rounded hover:bg-white/20 transition-colors ${
+                                statusFilter ? 'bg-white/30' : ''
+                              }`}
+                              title="Lọc theo trạng thái"
+                            >
+                              <Filter className="h-4 w-4" />
+                            </button>
+                            
+                            {showStatusFilter && (
+                              <div className="absolute top-full right-0 mt-1 w-48 bg-white rounded-md shadow-lg border z-10">
+                                <div className="py-1">
+                                  <button
+                                    onClick={clearStatusFilter}
+                                    className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 flex items-center justify-between"
+                                  >
+                                    Tất cả
+                                    {!statusFilter && <span className="text-[#237486]">✓</span>}
+                                  </button>
+                                  <button
+                                    onClick={() => handleStatusFilter("1")}
+                                    className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 flex items-center justify-between"
+                                  >
+                                    Hoạt động
+                                    {statusFilter === "1" && <span className="text-[#237486]">✓</span>}
+                                  </button>
+                                  <button
+                                    onClick={() => handleStatusFilter("2")}
+                                    className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 flex items-center justify-between"
+                                  >
+                                    Ngừng hoạt động
+                                    {statusFilter === "2" && <span className="text-[#237486]">✓</span>}
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </TableHead>
+                      <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 text-center">
+                        Hoạt động
+                      </TableHead>
+                    </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredUnitMeasures.length > 0 ? (
-                      filteredUnitMeasures.map((unitMeasure, index) => (
+                    {filteredStorageConditions.length > 0 ? (
+                      filteredStorageConditions.map((storageCondition, index) => (
                         <TableRow
                           key={index}
                           className={`
@@ -449,31 +501,41 @@ export default function UnitMeasuresPage() {
                           <TableCell className="text-slate-600 px-4 py-3 first:pl-6 last:pr-6 border-0 w-20 text-center font-medium">
                             {index + 1}
                           </TableCell>
-                          <TableCell className="font-medium text-slate-900 px-4 py-3 first:pl-6 last:pr-6 border-0 w-40">{unitMeasure?.name || ''}</TableCell>
-                          <TableCell className="text-slate-700 px-4 py-3 first:pl-6 last:pr-6 border-0">{unitMeasure?.description || ''}</TableCell>
+                          <TableCell className="font-medium text-slate-900 px-4 py-3 first:pl-6 last:pr-6 border-0 w-48 text-center">
+                            <span className="text-sm font-semibold text-slate-700">
+                              {storageCondition?.temperatureMin ?? 0} - {storageCondition?.temperatureMax ?? 0}°C
+                            </span>
+                          </TableCell>
+                          <TableCell className="font-medium text-slate-900 px-4 py-3 first:pl-6 last:pr-6 border-0 w-48 text-center">
+                            <span className="text-sm font-semibold text-slate-700">
+                              {storageCondition?.humidityMin ?? 0} - {storageCondition?.humidityMax ?? 0}%
+                            </span>
+                          </TableCell>
+                          <TableCell className="font-medium text-slate-900 px-4 py-3 first:pl-6 last:pr-6 border-0 w-32 text-center">
+                            {storageCondition?.lightLevel || ''}
+                          </TableCell>
                           <TableCell className="text-slate-700 px-4 py-3 first:pl-6 last:pr-6 border-0 w-40 text-center">
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              unitMeasure?.status === 1 
+                              storageCondition?.status === 1 
                                 ? 'bg-green-100 text-green-800' 
                                 : 'bg-red-100 text-red-800'
                             }`}>
-                              {unitMeasure?.status === 1 ? 'Hoạt động' : 'Ngừng hoạt động'}
+                              {storageCondition?.status === 1 ? 'Hoạt động' : 'Ngừng hoạt động'}
                             </span>
                           </TableCell>
-                          <TableCell className="text-slate-600 px-4 py-3 first:pl-6 last:pr-6 border-0 w-40">{unitMeasure?.createdAt || ''}</TableCell>
                           <TableCell className="text-slate-600 px-4 py-3 first:pl-6 last:pr-6 border-0 text-center">
                             <div className="flex items-center justify-center space-x-2">
                               <button 
                                 className="p-1 hover:bg-slate-100 rounded transition-colors"
                                 title="Chỉnh sửa"
-                                onClick={() => handleUpdateClick(unitMeasure)}
+                                onClick={() => handleUpdateClick(storageCondition)}
                               >
                                 <Edit className="h-4 w-4 text-[#1a7b7b]" />
                               </button>
                               <button 
                                 className="p-1 hover:bg-slate-100 rounded transition-colors"
                                 title="Xóa"
-                                onClick={() => handleDeleteClick(unitMeasure)}
+                                onClick={() => handleDeleteClick(storageCondition)}
                               >
                                 <Trash2 className="h-4 w-4 text-red-500" />
                               </button>
@@ -483,8 +545,8 @@ export default function UnitMeasuresPage() {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-12 text-slate-500">
-                          Không tìm thấy đơn vị đo nào
+                        <TableCell colSpan={5} className="text-center py-12 text-slate-500">
+                          Không tìm thấy điều kiện bảo quản nào
                         </TableCell>
                       </TableRow>
                     )}
@@ -501,9 +563,8 @@ export default function UnitMeasuresPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div className="text-sm text-slate-600">
-                  Hiển thị {((pagination.pageNumber - 1) * pagination.pageSize) + 1} - {Math.min(pagination.pageNumber * pagination.pageSize, pagination.totalCount)} trong tổng số {pagination.totalCount} đơn vị đo
+                  Hiển thị {((pagination.pageNumber - 1) * pagination.pageSize) + 1} - {Math.min(pagination.pageNumber * pagination.pageSize, pagination.totalCount)} trong tổng số {pagination.totalCount} điều kiện bảo quản
                 </div>
-                
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center space-x-2">
                     <Button
@@ -591,19 +652,19 @@ export default function UnitMeasuresPage() {
         )}
       </div>
 
-      {/* Create Unit Measure Modal */}
-      <CreateUnitMeasure
+      {/* Create Storage Condition Modal */}
+      <CreateStorageCondition
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onSuccess={handleCreateSuccess}
       />
 
-      {/* Update Unit Measure Modal */}
-      <UpdateUnitMeasure
+      {/* Update Storage Condition Modal */}
+      <UpdateStorageCondition
         isOpen={showUpdateModal}
         onClose={handleUpdateCancel}
         onSuccess={handleCreateSuccess}
-        unitMeasureData={itemToUpdate}
+        storageConditionData={itemToUpdate}
       />
 
       {/* Delete Confirmation Modal */}
@@ -611,7 +672,7 @@ export default function UnitMeasuresPage() {
         isOpen={showDeleteModal}
         onClose={handleDeleteCancel}
         onConfirm={handleDeleteConfirm}
-        itemName={itemToDelete?.name || ""}
+        itemName={itemToDelete?.lightLevel || ""}
       />
     </div>
   )

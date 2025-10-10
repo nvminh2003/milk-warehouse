@@ -33,3 +33,23 @@ code {
 .animate-shimmer {
   animation: shimmer 2s infinite;
 }
+
+/* Ẩn thanh cuộn sidebar - overlay lên background */
+.sidebar-scroll {
+  overflow-y: auto;
+  /* Ẩn thanh cuộn nhưng vẫn có thể cuộn */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.sidebar-scroll::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Đảm bảo sidebar không bị thụt vào khi có thanh cuộn */
+.sidebar-container {
+  /* Giữ nguyên width cố định */
+  width: 280px !important;
+  /* Không cho thanh cuộn ảnh hưởng đến layout */
+  box-sizing: border-box;
+}

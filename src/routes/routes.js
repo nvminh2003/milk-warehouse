@@ -3,7 +3,6 @@ import Layout from "../components/layout/Layout";
 import NotFoundPage from "../pages/NotFoundPage";
 import Dashboard from "../pages/AccountPage/Dashboard";
 import Products from "../pages/GoodPage/GoodsList";
-import Orders from "../pages/Orders";
 import Reports from "../pages/Reports";
 import Settings from "../pages/Settings";
 import Areas from "../pages/AreaAndLocationPage/Areas";
@@ -13,7 +12,9 @@ import ForgotPasswordPage from "../pages/AuthenticationPage/ForgotPasswordPage";
 import Accounts from "../pages/AccountPage/AccountList"
 import CategoryList from "../pages/CategoryPage/CategoryList";
 import UnitMeasureList from "../pages/UnitMeasurePage/UnitMeasureList";
-
+import StorageCondition from "../pages/AreaAndLocationPage/StorageCondition/StorageConditionList";
+import GoodsList from "../pages/GoodPage/GoodsList";
+import SupplierList from "../pages/SupplierAndRetailerPage/SupplierPage/SupplierList"
 export const routes = [
     {
         path: "/login",
@@ -55,15 +56,6 @@ export const routes = [
         isShowHeader: true,
     },
     {
-        path: "/admin/orders",
-        page: () => (
-            <Layout>
-                <Orders />
-            </Layout>
-        ),
-        isShowHeader: true,
-    },
-    {
         path: "/admin/reports",
         page: () => (
             <Layout>
@@ -99,6 +91,15 @@ export const routes = [
         ),
         isShowHeader: true,
     },
+     {
+        path: "/admin/storage-condition",
+        page: () => (
+            <Layout>
+                <StorageCondition />
+            </Layout>
+        ),
+        isShowHeader: true,
+    },
     {
         path: "/admin/accounts",
         page: () => (
@@ -121,6 +122,22 @@ export const routes = [
          page: () => (
             <Layout>
                 <UnitMeasureList />
+            </Layout>
+        ),
+    },
+    {
+        path: "/sales-manager/goods",
+         page: () => (
+            <Layout>
+                <GoodsList />
+            </Layout>
+        ),
+    },
+    {
+        path: "/sales-manager/supplier",
+         page: () => (
+            <Layout>
+                <SupplierList />
             </Layout>
         ),
     },

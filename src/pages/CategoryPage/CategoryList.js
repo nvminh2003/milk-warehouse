@@ -37,6 +37,7 @@ export default function CategoriesPage() {
     pageSize: 10,
     totalCount: 0
   })
+  const [showPageSizeFilter, setShowPageSizeFilter] = useState(false)
 
   // Fetch data from API
   const fetchData = async (searchParams = {}) => {
@@ -92,26 +93,29 @@ export default function CategoriesPage() {
       if (showStatusFilter && !event.target.closest('.status-filter-dropdown')) {
         setShowStatusFilter(false)
       }
+      if (showPageSizeFilter && !event.target.closest('.page-size-filter-dropdown')) {
+        setShowPageSizeFilter(false)
+      }
     }
 
     document.addEventListener('mousedown', handleClickOutside)
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, [showStatusFilter])
+  }, [showStatusFilter, showPageSizeFilter])
 
   // Search with debounce
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       fetchData({ 
         pageNumber: 1, 
-        pageSize: 10, 
+        pageSize: pagination.pageSize, 
         search: searchQuery || "", 
         sortField: sortField,
         sortAscending: sortAscending,
         status: statusFilter
       })
-      setPagination(prev => ({ ...prev, pageNumber: 1, pageSize: 10 }))
+      setPagination(prev => ({ ...prev, pageNumber: 1 }))
     }, 500)
 
     return () => clearTimeout(timeoutId)
@@ -121,26 +125,26 @@ export default function CategoriesPage() {
   useEffect(() => {
     fetchData({ 
       pageNumber: 1, 
-      pageSize: 10, 
+      pageSize: pagination.pageSize, 
       search: searchQuery || "", 
       sortField: sortField,
       sortAscending: sortAscending,
       status: statusFilter
     })
-    setPagination(prev => ({ ...prev, pageNumber: 1, pageSize: 10 }))
+    setPagination(prev => ({ ...prev, pageNumber: 1 }))
   }, [statusFilter])
 
   // Sort when sortField or sortAscending changes
   useEffect(() => {
     fetchData({ 
       pageNumber: 1, 
-      pageSize: 10, 
+      pageSize: pagination.pageSize, 
       search: searchQuery || "", 
       sortField: sortField,
       sortAscending: sortAscending,
       status: statusFilter
     })
-    setPagination(prev => ({ ...prev, pageNumber: 1, pageSize: 10 }))
+    setPagination(prev => ({ ...prev, pageNumber: 1 }))
   }, [sortField, sortAscending])
 
   // Remove client-side filtering since backend already handles search and filter
@@ -160,7 +164,7 @@ export default function CategoriesPage() {
     // Refresh data after successful creation with new sort
     fetchData({
       pageNumber: 1,
-      pageSize: 10,
+      pageSize: pagination.pageSize,
       search: searchQuery || "",
       sortField: "categoryName",
       sortAscending: false,
@@ -200,7 +204,7 @@ export default function CategoriesPage() {
       // Refresh data after deletion, keeping current page or going to previous page if needed
       fetchData({
         pageNumber: targetPage,
-        pageSize: 10,
+        pageSize: pagination.pageSize,
         search: searchQuery || "",
         sortField: sortField,
         sortAscending: sortAscending,
@@ -236,6 +240,21 @@ export default function CategoriesPage() {
   const clearStatusFilter = () => {
     setStatusFilter("")
     setShowStatusFilter(false)
+  }
+
+  const handlePageSizeChange = (newPageSize) => {
+    setPagination(prev => ({ ...prev, pageSize: newPageSize, pageNumber: 1 }))
+    setShowPageSizeFilter(false)
+    
+    // Refresh data with new page size
+    fetchData({
+      pageNumber: 1,
+      pageSize: newPageSize,
+      search: searchQuery || "",
+      sortField: sortField,
+      sortAscending: sortAscending,
+      status: statusFilter
+    })
   }
 
   const handleSort = (field) => {
@@ -464,50 +483,87 @@ export default function CategoriesPage() {
                 <div className="text-sm text-slate-600">
                   Hiển thị {((pagination.pageNumber - 1) * pagination.pageSize) + 1} - {Math.min(pagination.pageNumber * pagination.pageSize, pagination.totalCount)} trong tổng số {pagination.totalCount} danh mục
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      if (pagination.pageNumber > 1) {
-                        fetchData({ 
-                          pageNumber: pagination.pageNumber - 1, 
-                          pageSize: 10,
-                          search: searchQuery || "",
-                          sortField: sortField,
-                          sortAscending: sortAscending,
-                          status: statusFilter
-                        })
-                        setPagination(prev => ({ ...prev, pageNumber: prev.pageNumber - 1, pageSize: 10 }))
-                      }
-                    }}
-                    disabled={pagination.pageNumber <= 1}
-                  >
-                    Trước
-                  </Button>
-                  <span className="text-sm text-slate-600">
-                    Trang {pagination.pageNumber} / {Math.ceil(pagination.totalCount / pagination.pageSize)}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      if (pagination.pageNumber < Math.ceil(pagination.totalCount / pagination.pageSize)) {
-                        fetchData({ 
-                          pageNumber: pagination.pageNumber + 1, 
-                          pageSize: 10,
-                          search: searchQuery || "",
-                          sortField: sortField,
-                          sortAscending: sortAscending,
-                          status: statusFilter
-                        })
-                        setPagination(prev => ({ ...prev, pageNumber: prev.pageNumber + 1, pageSize: 10 }))
-                      }
-                    }}
-                    disabled={pagination.pageNumber >= Math.ceil(pagination.totalCount / pagination.pageSize)}
-                  >
-                    Sau
-                  </Button>
+                
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        if (pagination.pageNumber > 1) {
+                          fetchData({ 
+                            pageNumber: pagination.pageNumber - 1, 
+                            pageSize: pagination.pageSize,
+                            search: searchQuery || "",
+                            sortField: sortField,
+                            sortAscending: sortAscending,
+                            status: statusFilter
+                          })
+                          setPagination(prev => ({ ...prev, pageNumber: prev.pageNumber - 1 }))
+                        }
+                      }}
+                      disabled={pagination.pageNumber <= 1}
+                    >
+                      Trước
+                    </Button>
+                    <span className="text-sm text-slate-600">
+                      Trang {pagination.pageNumber} / {Math.ceil(pagination.totalCount / pagination.pageSize)}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        if (pagination.pageNumber < Math.ceil(pagination.totalCount / pagination.pageSize)) {
+                          fetchData({ 
+                            pageNumber: pagination.pageNumber + 1, 
+                            pageSize: pagination.pageSize,
+                            search: searchQuery || "",
+                            sortField: sortField,
+                            sortAscending: sortAscending,
+                            status: statusFilter
+                          })
+                          setPagination(prev => ({ ...prev, pageNumber: prev.pageNumber + 1 }))
+                        }
+                      }}
+                      disabled={pagination.pageNumber >= Math.ceil(pagination.totalCount / pagination.pageSize)}
+                    >
+                      Sau
+                    </Button>
+                  </div>
+                  
+                  {/* Page Size Selector */}
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm text-slate-600">Hiển thị:</span>
+                    <div className="relative page-size-filter-dropdown">
+                      <button
+                        onClick={() => setShowPageSizeFilter(!showPageSizeFilter)}
+                        className="flex items-center space-x-2 px-3 py-2 text-sm border border-slate-300 rounded-md hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#237486] focus:border-[#237486]"
+                      >
+                        <span>{pagination.pageSize}</span>
+                        <ChevronDown className="h-4 w-4" />
+                      </button>
+                      
+                      {showPageSizeFilter && (
+                        <div className="absolute bottom-full right-0 mb-1 w-20 bg-white rounded-md shadow-lg border z-10">
+                          <div className="py-1">
+                            {[10, 20, 30, 40].map((size) => (
+                              <button
+                                key={size}
+                                onClick={() => handlePageSizeChange(size)}
+                                className={`w-full text-left px-3 py-2 text-sm hover:bg-slate-100 flex items-center justify-between ${
+                                  pagination.pageSize === size ? 'bg-[#237486] text-white' : 'text-slate-700'
+                                }`}
+                              >
+                                {size}
+                                {pagination.pageSize === size && <span className="text-white">✓</span>}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-sm text-slate-600">/ Trang</span>
+                  </div>
                 </div>
               </div>
             </CardContent>
