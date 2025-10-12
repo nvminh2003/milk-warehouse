@@ -1,20 +1,57 @@
-import { useState } from "react"
-import { Button } from "../ui/button"
-import { Input } from "../ui/input"
-import { Label } from "../ui/label"
-import { Checkbox } from "../ui/checkbox"
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { Checkbox } from "../ui/checkbox";
+import { Link, useNavigate } from "react-router-dom";
+import { message, Spin } from "antd"; // dùng thông báo của antd cho tiện
+import { login } from "../../services/AuthenticationServices"; // ✅ import service login
 
 export function LoginForm() {
-    const [email, setEmail] = useState("")
-    const [password, setPassword] = useState("")
-    const [rememberMe, setRememberMe] = useState(false)
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [rememberMe, setRememberMe] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
 
-    const handleSubmit = (e) => {
-        e.preventDefault()
-        console.log("[v0] Đăng nhập:", { email, rememberMe })
-        // Thêm logic xác thực đăng nhập tại đây
-    }
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        if (!email || !password) {
+            message.warning("Vui lòng nhập đầy đủ thông tin đăng nhập.");
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const res = await login({ email, password });
+            console.log("Login response:", res);
+
+            if (res.success) {
+                // message.success("Đăng nhập thành công!");
+                window.showToast(
+                    `Đăng nhập thành công!`,
+                    "success"
+                );
+                // ✅ Nếu người dùng chọn "Ghi nhớ 30 ngày", có thể lưu token lâu hơn
+                if (rememberMe) {
+                    localStorage.setItem("rememberMe", "true");
+                } else {
+                    localStorage.removeItem("rememberMe");
+                }
+
+                // ✅ Điều hướng sau khi đăng nhập thành công
+                navigate("/admin/dashboard");
+            } else {
+                message.error(res.message || "Đăng nhập thất bại!");
+            }
+        } catch (error) {
+            console.error("Error in login form:", error);
+            message.error("Không thể đăng nhập. Vui lòng thử lại sau!");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <div className="space-y-8">
@@ -30,10 +67,12 @@ export function LoginForm() {
                             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
                         </svg>
                     </div>
-                    <span className="text-xl font-semibold text-foreground">HỆ THỐNG PHÂN PHỐI KHO SỮA</span>
+                    <span className="text-xl font-semibold text-foreground">
+                        HỆ THỐNG PHÂN PHỐI KHO SỮA
+                    </span>
                 </div>
 
-                <h2 className="text-4xl font-serif text-foreground text-balance leading-tight">
+                <h2 className="text-4xl font-serif text-foreground leading-tight">
                     Đăng nhập vào tài khoản của bạn
                 </h2>
                 <p className="text-muted-foreground leading-relaxed">
@@ -95,21 +134,11 @@ export function LoginForm() {
                 <Button
                     type="submit"
                     className="w-full h-11 text-base login-button"
+                    disabled={loading}
                 >
-                    Đăng nhập
+                    {loading ? <Spin size="small" /> : "Đăng nhập"}
                 </Button>
             </form>
-
-            {/* Đường kẻ chia */}
-            <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-border" />
-                </div>
-                <div className="relative flex justify-center text-sm" />
-            </div>
-
-            {/* Đăng nhập bằng mạng xã hội (nếu cần sau này) */}
-            <div className="grid grid-cols-2 gap-3"></div>
         </div>
-    )
+    );
 }

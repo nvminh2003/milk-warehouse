@@ -6,8 +6,8 @@ import Products from "../pages/GoodPage/GoodsList";
 import Orders from "../pages/Orders";
 import Reports from "../pages/Reports";
 import Settings from "../pages/Settings";
-import Areas from "../pages/AreaAndLocationPage/Areas";
-import Locations from "../pages/AreaAndLocationPage/Locations";
+import Areas from "../pages/AreaAndLocationPage/AreaPage/AreasList";
+import Locations from "../pages/AreaAndLocationPage/LocationPage/LocationList";
 import LoginPage from "../pages/AuthenticationPage/LoginPage/LoginPage";
 import ForgotPasswordPage from "../pages/AuthenticationPage/ForgotPasswordPage";
 import Accounts from "../pages/AccountPage/AccountList"
@@ -26,8 +26,7 @@ export const routes = [
     {
         path: "/",
         page: () => {
-            // Nếu đã đăng nhập thì vào dashboard, chưa thì về login
-            if (localStorage.getItem("token")) {
+            if (localStorage.getItem("accessToken")) {
                 window.location.href = "/admin/dashboard";
                 return null;
             } else {
@@ -102,9 +101,9 @@ export const routes = [
     {
         path: "/admin/batch",
         page: () => (
-            <AdminLayout>
+            <Layout>
                 <BatchList />
-            </AdminLayout>
+            </Layout>
         ),
         isShowHeader: true,
     },
@@ -119,7 +118,7 @@ export const routes = [
     },
     {
         path: "/sales-manager/categorys",
-         page: () => (
+        page: () => (
             <Layout>
                 <CategoryList />
             </Layout>

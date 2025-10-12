@@ -1,7 +1,21 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { LogoutOutlined, BellOutlined, StarOutlined, MenuOutlined, MenuFoldOutlined } from "@ant-design/icons";
+import { logout } from "../../services/AuthenticationServices";
 
-const HeaderBar = ({ onLogout, onToggleSidebar, sidebarCollapsed }) => {
+const HeaderBar = ({ onToggleSidebar, sidebarCollapsed }) => {
+    const navigate = useNavigate();
+
+    const handleLogout = async () => {
+        try {
+            await logout();
+        } catch (error) {
+            console.error("Logout failed:", error);
+        } finally {
+            navigate("/login");
+        }
+    };
+
     return (
         <div
             style={{
@@ -43,6 +57,7 @@ const HeaderBar = ({ onLogout, onToggleSidebar, sidebarCollapsed }) => {
                     Kho Phân Phối Sữa
                 </span>
             </div>
+
             <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
                 <BellOutlined
                     style={{ fontSize: 22, color: "white", cursor: "pointer" }}
@@ -51,7 +66,7 @@ const HeaderBar = ({ onLogout, onToggleSidebar, sidebarCollapsed }) => {
                 <LogoutOutlined
                     style={{ fontSize: 22, color: "white", cursor: "pointer" }}
                     title="Đăng xuất"
-                    onClick={onLogout}
+                    onClick={handleLogout}
                 />
             </div>
         </div>

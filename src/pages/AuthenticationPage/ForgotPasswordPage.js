@@ -1,7 +1,12 @@
 import React, { useState } from "react";
-import { Form, Input, Button, Typography, Card, message } from "antd";
-import { MailOutlined, ArrowLeftOutlined } from "@ant-design/icons";
+import { Form, Input, Button, Typography, Card } from "antd";
+import {
+    MailOutlined,
+    ArrowLeftOutlined,
+    CheckCircleOutlined,
+} from "@ant-design/icons";
 import { Link } from "react-router-dom";
+import { forgotPassword } from "../../services/AuthenticationServices";
 
 const { Title, Text } = Typography;
 
@@ -10,14 +15,21 @@ const ForgotPasswordPage = () => {
     const [emailSent, setEmailSent] = useState(false);
 
     const onFinish = async (values) => {
-        console.log("Forgot password for:", values.email);
         setLoading(true);
         try {
-            await new Promise((resolve) => setTimeout(resolve, 1500));
+            const res = await forgotPassword(values.email);
+            const successMsg =
+                res?.message || "Đã gửi email khôi phục mật khẩu!";
+            window.showToast(successMsg);
+            console.log("ForgotPassword response:", res);
             setEmailSent(true);
-            message.success("Đã gửi email khôi phục mật khẩu!");
         } catch (err) {
-            message.error("Có lỗi xảy ra, vui lòng thử lại!");
+            const errorMsg =
+                err?.response?.data?.message?.replace(/^\[.*?\]\s*/, "") ||
+                err?.message ||
+                "Có lỗi xảy ra, vui lòng thử lại!";
+            window.showToast(errorMsg);
+            console.error(err);
         } finally {
             setLoading(false);
         }
@@ -37,23 +49,32 @@ const ForgotPasswordPage = () => {
             <Card
                 style={{
                     width: "100%",
-                    maxWidth: 620,
-                    borderRadius: 12,
-                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                    maxWidth: 500,
+                    borderRadius: 16,
+                    boxShadow: "0 4px 15px rgba(0,0,0,0.08)",
                     textAlign: "center",
-                    padding: "40px 60px",
+                    padding: "48px 40px",
                 }}
             >
                 {!emailSent ? (
                     <>
-                        <Title level={3} style={{ color: "#040404ff", marginBottom: 8 }}>
+                        <Title
+                            level={3}
+                            style={{ color: "#237486", marginBottom: 8 }}
+                        >
                             Quên mật khẩu
                         </Title>
                         <Text type="secondary">
-                            Nhập địa chỉ email và chúng tôi sẽ gửi liên kết để đặt lại mật khẩu.
+                            Nhập địa chỉ email và chúng tôi sẽ gửi liên kết để
+                            đặt lại mật khẩu.
                         </Text>
 
-                        <Form layout="vertical" size="large" style={{ marginTop: 24 }}>
+                        <Form
+                            layout="vertical"
+                            size="large"
+                            onFinish={onFinish}
+                            style={{ marginTop: 24 }}
+                        >
                             <Form.Item
                                 label="Email"
                                 name="email"
@@ -62,7 +83,10 @@ const ForgotPasswordPage = () => {
                                     { type: "email", message: "Email không hợp lệ!" },
                                 ]}
                             >
-                                <Input placeholder="eg: example@gmail.com" />
+                                <Input
+                                    prefix={<MailOutlined />}
+                                    placeholder="vd: example@gmail.com"
+                                />
                             </Form.Item>
 
                             <Button
@@ -71,12 +95,14 @@ const ForgotPasswordPage = () => {
                                 block
                                 loading={loading}
                                 style={{
-                                    height: 40,
+                                    height: 42,
                                     backgroundColor: "#237486",
                                     borderColor: "#237486",
+                                    borderRadius: 8,
+                                    fontWeight: 500,
                                 }}
                             >
-                                Send email
+                                Gửi email
                             </Button>
                         </Form>
 
@@ -88,28 +114,49 @@ const ForgotPasswordPage = () => {
                     </>
                 ) : (
                     <>
-                        <Title level={3} style={{ color: "#003399" }}>
-                            Email đã được gửi
+                        <CheckCircleOutlined
+                            style={{
+                                fontSize: 60,
+                                color: "#28a745",
+                                marginBottom: 16,
+                            }}
+                        />
+                        <Title
+                            level={3}
+                            style={{ color: "#237486", marginBottom: 8 }}
+                        >
+                            Email đã được gửi!
                         </Title>
-                        <Text>
+                        <Text type="secondary">
                             Vui lòng kiểm tra hộp thư của bạn để đặt lại mật khẩu.
                         </Text>
 
                         <Button
                             type="primary"
+                            block
                             style={{
                                 marginTop: 24,
-                                backgroundColor: "#6c757d",
-                                borderColor: "#6c757d",
+                                backgroundColor: "#237486",
+                                borderColor: "#237486",
+                                borderRadius: 8,
+                                height: 42,
                             }}
                             onClick={() => setEmailSent(false)}
                         >
                             Gửi lại email
                         </Button>
 
-                        <div style={{ marginTop: 16 }}>
-                            <Link to="/login" style={{ color: "#333" }}>
-                                <ArrowLeftOutlined /> Quay lại đăng nhập
+                        <div style={{ marginTop: 20 }}>
+                            <Link
+                                to="/login"
+                                style={{
+                                    color: "#237486",
+                                    textDecoration: "none",
+                                    fontWeight: 500,
+                                }}
+                            >
+                                <ArrowLeftOutlined style={{ marginRight: 6 }} />
+                                Quay lại đăng nhập
                             </Link>
                         </div>
                     </>
