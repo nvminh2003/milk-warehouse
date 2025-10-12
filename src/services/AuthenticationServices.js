@@ -77,11 +77,16 @@ export const refreshAccessToken = async () => {
 // Đăng xuất
 export const logout = async () => {
     try {
-        await api.get("/Authentication/Logout");
+        const token = localStorage.getItem("accessToken");
+        await api.get("/Authentication/Logout", {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
     } catch (error) {
-        console.warn("Logout API failed, vẫn xóa localStorage.");
+        console.warn("Logout API failed, vẫn xóa localStorage.", error);
     } finally {
-        // 🔹 Xóa dữ liệu token ở client
+        // Dù có lỗi vẫn xóa dữ liệu cục bộ
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
         localStorage.removeItem("userInfo");
@@ -100,5 +105,40 @@ export const forgotPassword = async (email) => {
             throw new Error(error.response.data.message);
         }
         throw error;
+    }
+};
+
+// Xác minh OTP
+export const verifyOtp = async (email, otpCode) => {
+    try {
+        const response = await api.post("/Authentication/VerifyOtp", {
+            email,
+            otpCode,
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Verify OTP API failed:", error);
+        const message =
+            error.response?.data?.message?.replace(/^\[.*?\]\s*/, "") ||
+            "Xác minh OTP thất bại. Vui lòng thử lại!";
+        throw new Error(message);
+    }
+};
+
+// Đặt lại mật khẩu
+export const resetPassword = async ({ email, newPassword, confirmNewPassword }) => {
+    try {
+        const response = await api.post("/Authentication/ResetPassword", {
+            email,
+            newPassword,
+            confirmNewPassword,
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Reset Password API failed:", error);
+        const message =
+            error.response?.data?.message?.replace(/^\[.*?\]\s*/, "") ||
+            "Không thể đặt lại mật khẩu. Vui lòng thử lại!";
+        throw new Error(message);
     }
 };
