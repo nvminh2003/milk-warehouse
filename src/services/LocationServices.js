@@ -12,16 +12,22 @@ export const getLocations = async (searchParams = {}) => {
                 searchParams.sortAscending !== undefined
                     ? searchParams.sortAscending
                     : true,
-            // Build filters object: support status and isAvailable
-            filters: {},
+            filters: {}
         };
 
-        if (searchParams.status !== undefined && searchParams.status !== "") {
-            body.filters.status = searchParams.status;
+        // Add filter parameters to filters object only when they have values
+        if (searchParams.status !== undefined && searchParams.status !== "" && searchParams.status !== null) {
+            body.filters.status = String(searchParams.status);
         }
-        if (searchParams.isAvailable !== undefined && searchParams.isAvailable !== "") {
-            body.filters.isAvailable = searchParams.isAvailable;
+        if (searchParams.isAvailable !== undefined && searchParams.isAvailable !== "" && searchParams.isAvailable !== null) {
+            body.filters.isAvailable = String(searchParams.isAvailable);
         }
+        if (searchParams.areaId !== undefined && searchParams.areaId !== "" && searchParams.areaId !== null) {
+            body.filters.areaId = String(searchParams.areaId);
+        }
+
+        console.log("Sending request body:", body);
+        console.log("Search params:", searchParams);
 
         const res = await api.post("/Location/Locations", body);
         console.log("Location API response:", res.data);

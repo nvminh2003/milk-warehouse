@@ -176,7 +176,7 @@ const AreaLists = () => {
             },
         },
         {
-            title: "Thao tác",
+            title: "Hoạt động",
             render: (_, record) => (
                 <Space>
                     <Button type="link" onClick={() => handleOpenEdit(record)}>

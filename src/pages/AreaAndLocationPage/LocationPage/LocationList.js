@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Table, Button, Space, Tag, Modal, Form, message, Divider, Row, Col, Pagination, Select, Input, InputNumber } from "antd";
-import { CheckCircleOutlined, PlusOutlined, ThunderboltOutlined } from "@ant-design/icons";
+import { Button, Space, Tag, Modal, Form, message, Divider, Row, Col, Select, Input as AntInput, InputNumber } from "antd";
+import { CheckCircleOutlined, ThunderboltOutlined } from "@ant-design/icons";
 import { getLocations, createLocation, updateLocation, deleteLocation } from "../../../services/LocationServices";
 import { getAreas } from "../../../services/AreaServices";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2, Search, Filter, ChevronDown, Plus } from "lucide-react";
 import DeleteModal from "../../../components/Common/DeleteModal";
-import BaseFilter from "../../../components/Common/BaseFilter";
+import { Card, CardContent } from "../../../components/ui/card";
+import { Table as CustomTable, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../../components/ui/table";
 
 const { Option } = Select;
 
@@ -25,16 +26,32 @@ const LocationList = () => {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [isEdit, setIsEdit] = useState(false);
     const [editingLocation, setEditingLocation] = useState(null);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [statusFilter, setStatusFilter] = useState("");
+    const [showStatusFilter, setShowStatusFilter] = useState(false);
+    const [statusTypeFilter, setStatusTypeFilter] = useState("");
+    const [showStatusTypeFilter, setShowStatusTypeFilter] = useState(false);
+    const [sortField, setSortField] = useState("");
+    const [sortAscending, setSortAscending] = useState(true);
+    const [showPageSizeFilter, setShowPageSizeFilter] = useState(false);
 
     const fetchLocations = async (page = 1, pageSize = 10, params = {}) => {
         try {
             setLoading(true);
+            console.log("Fetching with params:", {
+                pageNumber: page,
+                pageSize,
+                search: params.search,
+                isAvailable: params.filters?.isAvailable,
+                status: params.filters?.status,
+            });
             const res = await getLocations({
                 pageNumber: page,
                 pageSize,
                 search: params.search,
                 isAvailable: params.filters?.isAvailable,
                 areaId: params.filters?.areaId,
+                status: params.filters?.status,
             });
 
             const payload = res ?? {};
@@ -73,10 +90,87 @@ const LocationList = () => {
         fetchAreas();
     }, []);
 
-    // 🧩 Callback khi filter thay đổi
+    // Callback khi filter thay đổi
     const handleFilterChange = (params) => {
         setPagination((p) => ({ ...p, current: 1 }));
         fetchLocations(1, pagination.pageSize, params);
+    };
+
+    // Close status filter dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (showStatusFilter && !event.target.closest('.status-filter-dropdown')) {
+                setShowStatusFilter(false);
+            }
+            if (showStatusTypeFilter && !event.target.closest('.status-type-filter-dropdown')) {
+                setShowStatusTypeFilter(false);
+            }
+            if (showPageSizeFilter && !event.target.closest('.page-size-filter-dropdown')) {
+                setShowPageSizeFilter(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [showStatusFilter, showStatusTypeFilter, showPageSizeFilter]);
+
+    // Search with debounce
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            fetchLocations(1, pagination.pageSize, {
+                search: searchQuery,
+                filters: { 
+                    isAvailable: statusFilter ? statusFilter === "true" : undefined,
+                    status: statusTypeFilter ? Number(statusTypeFilter) : undefined
+                }
+            });
+            setPagination((p) => ({ ...p, current: 1 }));
+        }, 500);
+
+        return () => clearTimeout(timeoutId);
+    }, [searchQuery, statusFilter, statusTypeFilter]);
+
+    const handleStatusFilter = (status) => {
+        setStatusFilter(status);
+        setShowStatusFilter(false);
+    };
+
+    const clearStatusFilter = () => {
+        setStatusFilter("");
+        setShowStatusFilter(false);
+    };
+
+    const handleStatusTypeFilter = (status) => {
+        setStatusTypeFilter(status);
+        setShowStatusTypeFilter(false);
+    };
+
+    const clearStatusTypeFilter = () => {
+        setStatusTypeFilter("");
+        setShowStatusTypeFilter(false);
+    };
+
+    const handlePageSizeChange = (newPageSize) => {
+        setPagination(prev => ({ ...prev, pageSize: newPageSize, current: 1 }));
+        setShowPageSizeFilter(false);
+        fetchLocations(1, newPageSize, {
+            search: searchQuery,
+            filters: { 
+                isAvailable: statusFilter ? statusFilter === "true" : undefined,
+                status: statusTypeFilter ? Number(statusTypeFilter) : undefined
+            }
+        });
+    };
+
+    const handleSort = (field) => {
+        if (sortField === field) {
+            setSortAscending(!sortAscending);
+        } else {
+            setSortField(field);
+            setSortAscending(true);
+        }
     };
 
     // Open modal for create
@@ -139,7 +233,13 @@ const LocationList = () => {
             }
 
             setIsModalVisible(false);
-            fetchLocations(pagination.current, pagination.pageSize);
+            fetchLocations(pagination.current, pagination.pageSize, {
+                search: searchQuery,
+                filters: { 
+                    isAvailable: statusFilter ? statusFilter === "true" : undefined,
+                    status: statusTypeFilter ? Number(statusTypeFilter) : undefined
+                }
+            });
         } catch (error) {
             console.error("Error submitting form:", error);
             const errorMsg =
@@ -154,14 +254,20 @@ const LocationList = () => {
         }
     };
 
-    // 🧩 Delete location
+    //Delete location
     const handleDeleteConfirm = async () => {
         try {
             await deleteLocation(itemToDelete?.locationId);
             window.showToast(`Đã xóa vị trí: ${itemToDelete?.locationCode || ""}`, "success");
             setShowDeleteModal(false);
             setItemToDelete(null);
-            fetchLocations(pagination.current, pagination.pageSize);
+            fetchLocations(pagination.current, pagination.pageSize, {
+                search: searchQuery,
+                filters: { 
+                    isAvailable: statusFilter ? statusFilter === "true" : undefined,
+                    status: statusTypeFilter ? Number(statusTypeFilter) : undefined
+                }
+            });
         } catch (error) {
             window.showToast("Có lỗi xảy ra khi xóa vị trí", "error");
         }
@@ -218,7 +324,7 @@ const LocationList = () => {
             },
         },
         {
-            title: "Thao tác",
+            title: "Hoạt động",
             render: (_, record) => (
                 <Space>
                     <Button type="link" onClick={() => handleOpenEdit(record)}>
@@ -239,90 +345,425 @@ const LocationList = () => {
         },
     ];
 
+    // Calculate stats
+    const availableCount = Array.isArray(locations) ? locations.filter((l) => l.isAvailable === true).length : 0;
+    const unavailableCount = Array.isArray(locations) ? locations.filter((l) => l.isAvailable === false).length : 0;
+
     return (
-        <div>
-            <div
-                style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    marginBottom: 24,
-                }}
-            >
-                <h2 style={{ fontWeight: 700, fontSize: 24 }}>Quản lý vị trí</h2>
-                <Button type="primary" style={{ backgroundColor: "#237486", borderColor: "#237486" }} icon={<PlusOutlined />} onClick={handleOpenCreate}>
-                    Thêm vị trí
-                </Button>
-            </div>
-
-            <BaseFilter
-                onFilterChange={handleFilterChange}
-                applyMode="auto"
-                filtersConfig={[
-                    // {
-                    //     label: "Tình trạng sử dụng",
-                    //     name: "isAvailable",
-                    //     type: "select",
-                    //     options: [
-                    //         { label: "Trống", value: "true" },
-                    //         { label: "Đang sử dụng", value: "false" },
-                    //     ],
-                    // },
-                    // {
-                    //     label: "Khu vực",
-                    //     name: "areaId",
-                    //     type: "select",
-                    //     options: areas.map((a) => ({
-                    //         label: a.areaName,
-                    //         value: a.areaId,
-                    //     })),
-                    // },
-
-                ]}
-                placeholderSearch="Tìm kiếm mã vị trí"
-            />
-
-            {/* Table without built-in pagination */}
-            <Table
-                columns={columns}
-                dataSource={locations}
-                loading={loading}
-                pagination={false}
-                rowKey="locationId"
-            />
-
-            {/* Custom pagination footer */}
-            <div
-                style={{
-                    background: "#fff",
-                    borderRadius: 8,
-                    padding: "15px 20px",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    marginTop: 16,
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-                }}
-            >
-                <div style={{ fontSize: 14, color: "#475569" }}>
-                    {pagination.total === 0
-                        ? "Hiển thị 0 - 0 trong tổng số 0 vị trí"
-                        : `Hiển thị ${(pagination.current - 1) * pagination.pageSize + 1
-                        } - ${Math.min(
-                            pagination.current * pagination.pageSize,
-                            pagination.total
-                        )} trong tổng số ${pagination.total} vị trí`}
+        <div style={{ minHeight: "100vh", background: "linear-gradient(to bottom right, #f8fafc, #e2e8f0)", padding: "24px" }}>
+            <div style={{ maxWidth: "1280px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "24px" }}>
+                {/* Header */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <div>
+                        <h1 style={{ fontSize: "30px", fontWeight: "bold", color: "#0f172a", margin: 0 }}>Quản lý Vị trí</h1>
+                        <p style={{ color: "#64748b", margin: "4px 0 0 0" }}>Quản lý các vị trí lưu trữ trong hệ thống</p>
+                    </div>
+                    <Button
+                        style={{
+                            backgroundColor: "#237486",
+                            borderColor: "#237486",
+                            height: "44px",
+                            padding: "0 24px",
+                            color: "white",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px"
+                        }}
+                        onClick={handleOpenCreate}
+                    >
+                        <Plus style={{ marginRight: "8px", height: "16px", width: "16px" }} />
+                        Thêm vị trí
+                    </Button>
                 </div>
-                <Pagination
-                    current={pagination.current}
-                    pageSize={pagination.pageSize}
-                    total={pagination.total}
-                    size="small"
-                    onChange={(page, size) => {
-                        setPagination((p) => ({ ...p, current: page, pageSize: size }));
-                        fetchLocations(page, size);
-                    }}
-                />
+
+                {/* Stats Cards */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px" }}>
+                    <Card style={{ borderLeft: "4px solid #237486" }}>
+                        <CardContent style={{ paddingTop: "24px" }}>
+                            <div style={{ fontSize: "14px", fontWeight: "500", color: "#64748b" }}>Tổng vị trí</div>
+                            <div style={{ fontSize: "30px", fontWeight: "bold", color: "#0f172a", marginTop: "8px" }}>{pagination.total}</div>
+                        </CardContent>
+                    </Card>
+                    <Card style={{ borderLeft: "4px solid #237486" }}>
+                        <CardContent style={{ paddingTop: "24px" }}>
+                            <div style={{ fontSize: "14px", fontWeight: "500", color: "#64748b" }}>Trống</div>
+                            <div style={{ fontSize: "30px", fontWeight: "bold", color: "#237486", marginTop: "8px" }}>{availableCount}</div>
+                        </CardContent>
+                    </Card>
+                    <Card style={{ borderLeft: "4px solid #237486" }}>
+                        <CardContent style={{ paddingTop: "24px" }}>
+                            <div style={{ fontSize: "14px", fontWeight: "500", color: "#64748b" }}>Đang sử dụng</div>
+                            <div style={{ fontSize: "30px", fontWeight: "bold", color: "#64748b", marginTop: "8px" }}>{unavailableCount}</div>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Search Bar */}
+                <Card>
+                    <CardContent className="pt-6">
+                        <AntInput
+                            placeholder="Tìm kiếm theo tên hoặc mô tả danh mục..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="h-12 text-base"
+                            prefix={<Search className="h-5 w-5 text-slate-400" />}
+                            style={{
+                                borderColor: 'rgba(26, 52, 59, 0.2)',
+                                backgroundColor: 'rgba(189, 193, 194, 0.2)'
+                            }}
+                        />
+                    </CardContent>
+                </Card>
+
+                {/* Locations Table */}
+                <Card style={{ boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)", overflow: "hidden", padding: 0 }}>
+                    <div style={{ width: "100%" }}>
+                        {loading ? (
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "48px 0" }}>
+                                <div style={{ color: "#64748b" }}>Đang tải dữ liệu...</div>
+                            </div>
+                        ) : (
+                            <div style={{ overflowX: "auto" }}>
+                                <CustomTable style={{ width: "100%" }}>
+                                    <TableHeader>
+                                        <TableRow style={{ backgroundColor: "#237486", margin: 0, width: "100%" }}>
+                                            <TableHead style={{ fontWeight: "600", color: "white", padding: "12px 16px", border: 0, width: "80px" }}>
+                                                STT
+                                            </TableHead>
+                                            <TableHead style={{ fontWeight: "600", color: "white", padding: "12px 16px", border: 0, width: "160px" }}>
+                                                <div style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", padding: "4px", margin: "-4px", borderRadius: "4px" }} onClick={() => handleSort("locationCode")}>
+                                                    <span>Mã vị trí</span>
+                                                    <div style={{ display: "flex", flexDirection: "column" }}>
+                                                        <ChevronDown
+                                                            style={{
+                                                                height: "12px",
+                                                                width: "12px",
+                                                                color: sortField === "locationCode" && sortAscending ? "white" : "rgba(255,255,255,0.5)",
+                                                                transform: "translateY(1px)"
+                                                            }}
+                                                        />
+                                                        <ChevronDown
+                                                            style={{
+                                                                height: "12px",
+                                                                width: "12px",
+                                                                color: sortField === "locationCode" && !sortAscending ? "white" : "rgba(255,255,255,0.5)",
+                                                                transform: "translateY(-1px) rotate(180deg)"
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </TableHead>
+                                            <TableHead style={{ fontWeight: "600", color: "white", padding: "12px 16px", border: 0 }}>
+                                                Khu vực
+                                            </TableHead>
+                                            <TableHead style={{ fontWeight: "600", color: "white", padding: "12px 16px", border: 0 }}>
+                                                Kệ
+                                            </TableHead>
+                                            <TableHead style={{ fontWeight: "600", color: "white", padding: "12px 16px", border: 0 }}>
+                                                Hàng
+                                            </TableHead>
+                                            <TableHead style={{ fontWeight: "600", color: "white", padding: "12px 16px", border: 0 }}>
+                                                Cột
+                                            </TableHead>
+                                            <TableHead style={{ fontWeight: "600", color: "white", padding: "12px 16px", border: 0, width: "160px" }}>
+                                                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+                                                    <span>Tình trạng</span>
+                                                    <div style={{ position: "relative" }} className="status-filter-dropdown">
+                                                        <button
+                                                            onClick={() => setShowStatusFilter(!showStatusFilter)}
+                                                            style={{
+                                                                padding: "4px",
+                                                                borderRadius: "4px",
+                                                                border: "none",
+                                                                background: statusFilter ? "rgba(255,255,255,0.3)" : "transparent",
+                                                                cursor: "pointer",
+                                                                color: "white"
+                                                            }}
+                                                            title="Lọc theo tình trạng"
+                                                        >
+                                                            <Filter style={{ height: "16px", width: "16px" }} />
+                                                        </button>
+
+                                                        {showStatusFilter && (
+                                                            <div style={{ position: "absolute", top: "100%", right: 0, marginTop: "4px", width: "192px", backgroundColor: "white", borderRadius: "6px", boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)", border: "1px solid #e2e8f0", zIndex: 10 }}>
+                                                                <div style={{ padding: "4px 0" }}>
+                                                                    <button
+                                                                        onClick={clearStatusFilter}
+                                                                        style={{ width: "100%", textAlign: "left", padding: "8px 16px", fontSize: "14px", color: "#374151", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between" }}
+                                                                    >
+                                                                        Tất cả
+                                                                        {!statusFilter && <span style={{ color: "#237486" }}>✓</span>}
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => handleStatusFilter("true")}
+                                                                        style={{ width: "100%", textAlign: "left", padding: "8px 16px", fontSize: "14px", color: "#374151", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between" }}
+                                                                    >
+                                                                        Trống
+                                                                        {statusFilter === "true" && <span style={{ color: "#237486" }}>✓</span>}
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => handleStatusFilter("false")}
+                                                                        style={{ width: "100%", textAlign: "left", padding: "8px 16px", fontSize: "14px", color: "#374151", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between" }}
+                                                                    >
+                                                                        Đang sử dụng
+                                                                        {statusFilter === "false" && <span style={{ color: "#237486" }}>✓</span>}
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </TableHead>
+                                            <TableHead style={{ fontWeight: "600", color: "white", padding: "12px 16px", border: 0, width: "160px" }}>
+                                                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+                                                    <span>Trạng thái</span>
+                                                    <div style={{ position: "relative" }} className="status-type-filter-dropdown">
+                                                        <button
+                                                            onClick={() => setShowStatusTypeFilter(!showStatusTypeFilter)}
+                                                            style={{
+                                                                padding: "4px",
+                                                                borderRadius: "4px",
+                                                                border: "none",
+                                                                background: statusTypeFilter ? "rgba(255,255,255,0.3)" : "transparent",
+                                                                cursor: "pointer",
+                                                                color: "white"
+                                                            }}
+                                                            title="Lọc theo trạng thái"
+                                                        >
+                                                            <Filter style={{ height: "16px", width: "16px" }} />
+                                                        </button>
+
+                                                        {showStatusTypeFilter && (
+                                                            <div style={{ position: "absolute", top: "100%", right: 0, marginTop: "4px", width: "192px", backgroundColor: "white", borderRadius: "6px", boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)", border: "1px solid #e2e8f0", zIndex: 10 }}>
+                                                                <div style={{ padding: "4px 0" }}>
+                                                                    <button
+                                                                        onClick={clearStatusTypeFilter}
+                                                                        style={{ width: "100%", textAlign: "left", padding: "8px 16px", fontSize: "14px", color: "#374151", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between" }}
+                                                                    >
+                                                                        Tất cả
+                                                                        {!statusTypeFilter && <span style={{ color: "#237486" }}>✓</span>}
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => handleStatusTypeFilter("1")}
+                                                                        style={{ width: "100%", textAlign: "left", padding: "8px 16px", fontSize: "14px", color: "#374151", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between" }}
+                                                                    >
+                                                                        Hoạt động
+                                                                        {statusTypeFilter === "1" && <span style={{ color: "#237486" }}>✓</span>}
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => handleStatusTypeFilter("2")}
+                                                                        style={{ width: "100%", textAlign: "left", padding: "8px 16px", fontSize: "14px", color: "#374151", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between" }}
+                                                                    >
+                                                                        Ngừng hoạt động
+                                                                        {statusTypeFilter === "2" && <span style={{ color: "#237486" }}>✓</span>}
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </TableHead>
+                                            <TableHead style={{ fontWeight: "600", color: "white", padding: "12px 16px", border: 0, textAlign: "center" }}>
+                                                Hoạt động
+                                            </TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {locations.length > 0 ? (
+                                            locations.map((location, index) => (
+                                                <TableRow
+                                                    key={location.locationId}
+                                                    style={{
+                                                        backgroundColor: index % 2 === 0 ? "white" : "#f8fafc",
+                                                        margin: 0,
+                                                        width: "100%"
+                                                    }}
+                                                >
+                                                    <TableCell style={{ color: "#64748b", padding: "12px 16px", border: 0, width: "80px", textAlign: "center", fontWeight: "500" }}>
+                                                        {(pagination.current - 1) * pagination.pageSize + index + 1}
+                                                    </TableCell>
+                                                    <TableCell style={{ fontWeight: "500", color: "#0f172a", padding: "12px 16px", border: 0, width: "160px" }}>
+                                                        {location?.locationCode || ''}
+                                                    </TableCell>
+                                                    <TableCell style={{ color: "#374151", padding: "12px 16px", border: 0 }}>
+                                                        {location?.areaNameDto?.areaName || "—"}
+                                                    </TableCell>
+                                                    <TableCell style={{ color: "#374151", padding: "12px 16px", border: 0 }}>
+                                                        {location?.rack || ''}
+                                                    </TableCell>
+                                                    <TableCell style={{ color: "#374151", padding: "12px 16px", border: 0 }}>
+                                                        {location?.row || ''}
+                                                    </TableCell>
+                                                    <TableCell style={{ color: "#374151", padding: "12px 16px", border: 0 }}>
+                                                        {location?.column || ''}
+                                                    </TableCell>
+                                                    <TableCell style={{ color: "#374151", padding: "12px 16px", border: 0, width: "160px", textAlign: "center" }}>
+                                                        <span style={{
+                                                            padding: "4px 8px",
+                                                            borderRadius: "9999px",
+                                                            fontSize: "12px",
+                                                            fontWeight: "500",
+                                                            backgroundColor: location?.isAvailable ? "#dcfce7" : "#fef2f2",
+                                                            color: location?.isAvailable ? "#166534" : "#dc2626"
+                                                        }}>
+                                                            {location?.isAvailable ? 'Trống' : 'Đang sử dụng'}
+                                                        </span>
+                                                    </TableCell>
+                                                    <TableCell style={{ color: "#374151", padding: "12px 16px", border: 0, textAlign: "center" }}>
+                                                        <span style={{
+                                                            padding: "4px 8px",
+                                                            borderRadius: "9999px",
+                                                            fontSize: "12px",
+                                                            fontWeight: "500",
+                                                            backgroundColor: location?.status === 1 ? "#dcfce7" : location?.status === 2 ? "#fef3c7" : "#fef2f2",
+                                                            color: location?.status === 1 ? "#166534" : location?.status === 2 ? "#d97706" : "#dc2626"
+                                                        }}>
+                                                            {location?.status === 1 ? 'Hoạt động' : location?.status === 2 ? 'Ngừng hoạt động' : 'Đã xóa'}
+                                                        </span>
+                                                    </TableCell>
+                                                    <TableCell style={{ color: "#64748b", padding: "12px 16px", border: 0, textAlign: "center" }}>
+                                                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+                                                            <button
+                                                                style={{ padding: "4px", background: "none", border: "none", cursor: "pointer", borderRadius: "4px" }}
+                                                                title="Chỉnh sửa"
+                                                                onClick={() => handleOpenEdit(location)}
+                                                            >
+                                                                <Edit style={{ height: "16px", width: "16px", color: "#1a7b7b" }} />
+                                                            </button>
+                                                            <button
+                                                                style={{ padding: "4px", background: "none", border: "none", cursor: "pointer", borderRadius: "4px" }}
+                                                                title="Xóa"
+                                                                onClick={() => {
+                                                                    setItemToDelete(location);
+                                                                    setShowDeleteModal(true);
+                                                                }}
+                                                            >
+                                                                <Trash2 style={{ height: "16px", width: "16px", color: "#ef4444" }} />
+                                                            </button>
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))
+                                        ) : (
+                                            <TableRow>
+                                                <TableCell colSpan={9} style={{ textAlign: "center", padding: "48px 0", color: "#64748b" }}>
+                                                    Không tìm thấy vị trí nào
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
+                                    </TableBody>
+                                </CustomTable>
+                            </div>
+                        )}
+                    </div>
+                </Card>
+
+                {/* Pagination */}
+                {!loading && pagination.total > 0 && (
+                    <Card>
+                        <CardContent style={{ paddingTop: "24px" }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                                <div style={{ fontSize: "14px", color: "#64748b" }}>
+                                    Hiển thị {((pagination.current - 1) * pagination.pageSize) + 1} - {Math.min(pagination.current * pagination.pageSize, pagination.total)} trong tổng số {pagination.total} vị trí
+                                </div>
+
+                                <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                        <Button
+                                            style={{ border: "none", background: "white" }}
+                                            size="small"
+                                            onClick={() => {
+                                                if (pagination.current > 1) {
+                                                    fetchLocations(pagination.current - 1, pagination.pageSize, {
+                                                        search: searchQuery,
+                                                        filters: { isAvailable: statusFilter ? statusFilter === "true" : undefined }
+                                                    });
+                                                    setPagination(prev => ({ ...prev, current: prev.current - 1 }));
+                                                }
+                                            }}
+                                            disabled={pagination.current <= 1}
+                                        >
+                                            Trước
+                                        </Button>
+                                        <span style={{ fontSize: "14px", color: "#64748b" }}>
+                                            Trang {pagination.current} / {Math.ceil(pagination.total / pagination.pageSize)}
+                                        </span>
+                                        <Button
+                                            style={{ border: "none", background: "white" }}
+                                            size="small"
+                                            onClick={() => {
+                                                if (pagination.current < Math.ceil(pagination.total / pagination.pageSize)) {
+                                                    fetchLocations(pagination.current + 1, pagination.pageSize, {
+                                                        search: searchQuery,
+                                                        filters: { isAvailable: statusFilter ? statusFilter === "true" : undefined }
+                                                    });
+                                                    setPagination(prev => ({ ...prev, current: prev.current + 1 }));
+                                                }
+                                            }}
+                                            disabled={pagination.current >= Math.ceil(pagination.total / pagination.pageSize)}
+                                        >
+                                            Sau
+                                        </Button>
+                                    </div>
+
+                                    {/* Page Size Selector */}
+                                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                        <span style={{ fontSize: "14px", color: "#64748b" }}>Hiển thị:</span>
+                                        <div style={{ position: "relative" }} className="page-size-filter-dropdown">
+                                            <button
+                                                onClick={() => setShowPageSizeFilter(!showPageSizeFilter)}
+                                                style={{
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    gap: "8px",
+                                                    padding: "8px 12px",
+                                                    fontSize: "14px",
+                                                    border: "1px solid #d1d5db",
+                                                    borderRadius: "6px",
+                                                    background: "white",
+                                                    cursor: "pointer"
+                                                }}
+                                            >
+                                                <span>{pagination.pageSize}</span>
+                                                <ChevronDown style={{ height: "16px", width: "16px" }} />
+                                            </button>
+
+                                            {showPageSizeFilter && (
+                                                <div style={{ position: "absolute", bottom: "100%", right: 0, marginBottom: "4px", width: "80px", backgroundColor: "white", borderRadius: "6px", boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)", border: "1px solid #e2e8f0", zIndex: 10 }}>
+                                                    <div style={{ padding: "4px 0" }}>
+                                                        {[10, 20, 30, 40].map((size) => (
+                                                            <button
+                                                                key={size}
+                                                                onClick={() => handlePageSizeChange(size)}
+                                                                style={{
+                                                                    width: "100%",
+                                                                    textAlign: "left",
+                                                                    padding: "8px 12px",
+                                                                    fontSize: "14px",
+                                                                    background: pagination.pageSize === size ? "#237486" : "white",
+                                                                    color: pagination.pageSize === size ? "white" : "#374151",
+                                                                    border: "none",
+                                                                    cursor: "pointer",
+                                                                    display: "flex",
+                                                                    alignItems: "center",
+                                                                    justifyContent: "space-between"
+                                                                }}
+                                                            >
+                                                                {size}
+                                                                {pagination.pageSize === size && <span style={{ color: "white" }}>✓</span>}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <span style={{ fontSize: "14px", color: "#64748b" }}>/ Trang</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
             </div>
 
             {/* Modal Create / Update */}
@@ -386,7 +827,7 @@ const LocationList = () => {
                                 label="Mã vị trí"
                                 rules={[{ required: true, message: "Vui lòng nhập mã vị trí" }]}
                             >
-                                <Input
+                                <AntInput
                                     placeholder="VD: A1-01"
                                     maxLength={20}
                                 />
@@ -401,7 +842,7 @@ const LocationList = () => {
                                 label="Kệ"
                                 rules={[{ required: true, message: "Vui lòng nhập tên kệ" }]}
                             >
-                                <Input
+                                <AntInput
                                     placeholder="VD: Kệ A1"
                                     maxLength={50}
                                 />
