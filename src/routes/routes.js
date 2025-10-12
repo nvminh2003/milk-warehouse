@@ -17,6 +17,8 @@ import GoodsList from "../pages/GoodPage/GoodsList";
 import SupplierList from "../pages/SupplierAndRetailerPage/SupplierPage/SupplierList";
 import RetailerList from "../pages/SupplierAndRetailerPage/RetailerPage/RetailerList";
 import BatchList from "../pages/BatchPage/BatchList";
+import VerifyOtpPage from "../pages/AuthenticationPage/VerifyOtpPage";
+import ResetPasswordPage from "../pages/AuthenticationPage/ResetPasswordPage";
 
 export const routes = [
     {
@@ -26,6 +28,14 @@ export const routes = [
     {
         path: "/forgot-password",
         page: ForgotPasswordPage,
+    },
+    {
+        path: "/verify-otp",
+        page: VerifyOtpPage,
+    },
+    {
+        path: "/reset-password",
+        page: ResetPasswordPage,
     },
     {
         path: "/",

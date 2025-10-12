@@ -10,7 +10,6 @@ import { login } from "../../services/AuthenticationServices"; // ✅ import ser
 export function LoginForm() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [rememberMe, setRememberMe] = useState(false);
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
@@ -33,12 +32,6 @@ export function LoginForm() {
                     `Đăng nhập thành công!`,
                     "success"
                 );
-                // ✅ Nếu người dùng chọn "Ghi nhớ 30 ngày", có thể lưu token lâu hơn
-                if (rememberMe) {
-                    localStorage.setItem("rememberMe", "true");
-                } else {
-                    localStorage.removeItem("rememberMe");
-                }
 
                 // ✅ Điều hướng sau khi đăng nhập thành công
                 navigate("/admin/dashboard");
@@ -118,17 +111,6 @@ export function LoginForm() {
                         required
                         className="h-11"
                     />
-                </div>
-
-                <div className="flex items-center gap-2">
-                    <Checkbox
-                        id="remember"
-                        checked={rememberMe}
-                        onCheckedChange={(checked) => setRememberMe(checked)}
-                    />
-                    <Label htmlFor="remember" className="text-sm text-muted-foreground cursor-pointer">
-                        Ghi nhớ đăng nhập trong 30 ngày
-                    </Label>
                 </div>
 
                 <Button
