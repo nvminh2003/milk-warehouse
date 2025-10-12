@@ -21,7 +21,7 @@ export const getGoods = async (searchParams = {}) => {
             sortAscending: searchParams.sortAscending !== undefined ? searchParams.sortAscending : true,
             filters: searchParams.status ? { status: searchParams.status } : {}
         };
-        
+
         const res = await api.post("/Goods/Goods", body);
         console.log("Goods API response:", res.data);
         console.log("Search params received:", searchParams);
@@ -33,9 +33,9 @@ export const getGoods = async (searchParams = {}) => {
     }
 };
 
-export const updateGood = async (goodId, goodData) => {
+export const updateGood = async (goodData) => {
     try {
-        const res = await api.put(`/Goods/Goods/${goodId}`, goodData);
+        const res = await api.put("/Goods/Update", goodData);
         console.log("Update good response:", res.data);
         return res.data;
     } catch (error) {
@@ -46,7 +46,7 @@ export const updateGood = async (goodId, goodData) => {
 
 export const deleteGood = async (goodId) => {
     try {
-        const res = await api.delete(`/Goods/Delete${goodId}`);
+        const res = await api.delete(`/Goods/Delete/${goodId}`);
         console.log("Delete good response:", res.data);
         return res.data;
     } catch (error) {

@@ -14,7 +14,8 @@ import CategoryList from "../pages/CategoryPage/CategoryList";
 import UnitMeasureList from "../pages/UnitMeasurePage/UnitMeasureList";
 import StorageCondition from "../pages/AreaAndLocationPage/StorageCondition/StorageConditionList";
 import GoodsList from "../pages/GoodPage/GoodsList";
-import SupplierList from "../pages/SupplierAndRetailerPage/SupplierPage/SupplierList"
+import SupplierList from "../pages/SupplierAndRetailerPage/SupplierPage/SupplierList";
+import RetailerList from "../pages/SupplierAndRetailerPage/RetailerPage/RetailerList";
 export const routes = [
     {
         path: "/login",
@@ -91,7 +92,7 @@ export const routes = [
         ),
         isShowHeader: true,
     },
-     {
+    {
         path: "/admin/storage-condition",
         page: () => (
             <Layout>
@@ -111,7 +112,7 @@ export const routes = [
     },
     {
         path: "/sales-manager/categorys",
-         page: () => (
+        page: () => (
             <Layout>
                 <CategoryList />
             </Layout>
@@ -119,7 +120,7 @@ export const routes = [
     },
     {
         path: "/sales-manager/unitMeasures",
-         page: () => (
+        page: () => (
             <Layout>
                 <UnitMeasureList />
             </Layout>
@@ -127,17 +128,25 @@ export const routes = [
     },
     {
         path: "/sales-manager/goods",
-         page: () => (
+        page: () => (
             <Layout>
                 <GoodsList />
             </Layout>
         ),
     },
     {
-        path: "/sales-manager/supplier",
-         page: () => (
+        path: "/sales-manager/suppliers",
+        page: () => (
             <Layout>
                 <SupplierList />
+            </Layout>
+        ),
+    },
+    {
+        path: "/sales-manager/retailers",
+        page: () => (
+            <Layout>
+                <RetailerList />
             </Layout>
         ),
     },

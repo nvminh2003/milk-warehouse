@@ -10,8 +10,8 @@ export const getCategory = async (searchParams = {}) => {
             sortAscending: searchParams.sortAscending !== undefined ? searchParams.sortAscending : true,
             filters: searchParams.status ? { status: searchParams.status } : {}
         };
-        
-        
+
+
         const res = await api.post("/Category/Categories", body);
         console.log("Category API response:", res.data);
         console.log("Search params received:", searchParams);
@@ -57,7 +57,7 @@ export const updateCategory = async (data) => {
         categoryId: data.categoryId,
         status: data.status
     };
-    
+
     try {
         console.log("Sending update request:", body);
         console.log("Data types:", {
@@ -66,7 +66,7 @@ export const updateCategory = async (data) => {
             categoryId: typeof body.categoryId,
             status: typeof body.status
         });
-        
+
         const res = await api.put("/Category/Update", body);
         console.log("Category update API response:", res.data);
         return res.data;

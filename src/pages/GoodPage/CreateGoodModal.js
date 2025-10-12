@@ -59,10 +59,10 @@ export default function CreateGood({ isOpen, onClose, onSuccess }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     // Validate required fields
-    if (!formData.goodsCode || !formData.goodsName || !formData.categoryId || 
-        !formData.supplierId || !formData.storageConditionId || !formData.unitMeasureId) {
+    if (!formData.goodsCode || !formData.goodsName || !formData.categoryId ||
+      !formData.supplierId || !formData.storageConditionId || !formData.unitMeasureId) {
       window.showToast("Vui lòng điền đầy đủ thông tin", "error")
       return
     }
@@ -76,7 +76,7 @@ export default function CreateGood({ isOpen, onClose, onSuccess }) {
       onClose && onClose()
     } catch (error) {
       console.error("Error creating good:", error)
-      
+
       // Show specific error message from API
       if (error.response && error.response.data && error.response.data.message) {
         window.showToast(`Lỗi: ${error.response.data.message}`, "error")
@@ -115,7 +115,7 @@ export default function CreateGood({ isOpen, onClose, onSuccess }) {
             <X className="h-5 w-5 text-gray-500" />
           </button>
         </div>
-        
+
         {/* Content */}
         <div className="p-6">
 
@@ -220,8 +220,8 @@ export default function CreateGood({ isOpen, onClose, onSuccess }) {
                     <option disabled>Đang tải...</option>
                   ) : (
                     storageConditions.map((condition) => (
-                      <option 
-                        key={condition.storageConditionId} 
+                      <option
+                        key={condition.storageConditionId}
                         value={condition.storageConditionId.toString()}
                       >
                         {condition.conditionName} - Nhiệt độ: {condition.temperatureMin}°C đến {condition.temperatureMax}°C - Độ ẩm: {condition.humidityMin}% đến {condition.humidityMax}%
@@ -247,8 +247,8 @@ export default function CreateGood({ isOpen, onClose, onSuccess }) {
                     <option disabled>Đang tải...</option>
                   ) : (
                     unitMeasures.map((unit) => (
-                      <option 
-                        key={unit.unitMeasureId} 
+                      <option
+                        key={unit.unitMeasureId}
                         value={unit.unitMeasureId.toString()}
                       >
                         {unit.name}

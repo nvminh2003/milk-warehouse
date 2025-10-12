@@ -45,20 +45,20 @@ export const deleteStorageCondition = async (StorageConditionId) => {
         if (!StorageConditionId) {
             throw new Error("StorageConditionId is required");
         }
-        
+
         console.log("Deleting StorageCondition with ID:", StorageConditionId);
         const res = await api.delete(`/StorageCondition/Delete/${StorageConditionId}`);
         console.log("StorageCondition delete API response:", res.data);
         return res.data;
     } catch (error) {
         console.error("Error deleting storage condition:", error);
-        
+
         // Log more details about the error
         if (error.response) {
             console.error("Response status:", error.response.status);
             console.error("Response data:", error.response.data);
         }
-        
+
         throw error;
     }
 };
@@ -72,7 +72,7 @@ export const updateStorageCondition = async (id, data) => {
         lightLevel: data.lightLevel || "",
         status: data.status || 1
     };
-    
+
     try {
         console.log("Sending update request for ID:", id);
         console.log("Update data:", body);
@@ -84,7 +84,7 @@ export const updateStorageCondition = async (id, data) => {
             lightLevel: typeof body.lightLevel,
             status: typeof body.status
         });
-        
+
         const res = await api.put(`/StorageCondition/Update/${id}`, body);
         console.log("StorageCondition update API response:", res.data);
         return res.data;

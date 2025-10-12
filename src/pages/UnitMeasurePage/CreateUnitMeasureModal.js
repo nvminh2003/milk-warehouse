@@ -17,7 +17,7 @@ export default function CreateUnitMeasure({ isOpen, onClose, onSuccess }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     // Validate form data using utility function
     if (!validateAndShowError(formData)) {
       return
@@ -32,7 +32,7 @@ export default function CreateUnitMeasure({ isOpen, onClose, onSuccess }) {
       onClose && onClose()
     } catch (error) {
       console.error("Error creating unit measure:", error)
-      
+
       // Show specific error message from API
       if (error.response && error.response.data && error.response.data.message) {
         window.showToast(`Lỗi: ${error.response.data.message}`, "error")
@@ -67,7 +67,7 @@ export default function CreateUnitMeasure({ isOpen, onClose, onSuccess }) {
             <X className="h-5 w-5 text-gray-500" />
           </button>
         </div>
-        
+
         {/* Content */}
         <div className="p-6">
 

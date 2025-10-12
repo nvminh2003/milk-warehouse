@@ -30,7 +30,7 @@ export default function UpdateUnitMeasure({ isOpen, onClose, onSuccess, unitMeas
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     // Validate form data using utility function
     if (!validateAndShowError(formData)) {
       return
@@ -43,19 +43,19 @@ export default function UpdateUnitMeasure({ isOpen, onClose, onSuccess, unitMeas
 
     try {
       setLoading(true)
-      
+
       // Only change status if user selected different from original
       const originalStatus = parseInt(unitMeasureData.status)
       const selectedStatus = parseInt(formData.status)
       const statusChanged = originalStatus !== selectedStatus
-      
+
       const updateData = {
         name: formData.name.trim(),
         description: formData.description.trim(),
         unitMeasureId: parseInt(unitMeasureData.unitMeasureId),
         status: statusChanged ? selectedStatus : originalStatus // Keep original if not changed
       }
-      
+
       console.log("Original status:", originalStatus, "Selected status:", selectedStatus)
       console.log("Status changed:", statusChanged)
       console.log("Update data:", updateData)
@@ -65,7 +65,7 @@ export default function UpdateUnitMeasure({ isOpen, onClose, onSuccess, unitMeas
         unitMeasureId: !isNaN(updateData.unitMeasureId),
         status: [1, 2].includes(updateData.status)
       })
-      
+
       const response = await updateUnitMeasure(updateData)
       console.log("Unit measure updated:", response)
       window.showToast("Cập nhật đơn vị đo thành công!", "success")
@@ -73,7 +73,7 @@ export default function UpdateUnitMeasure({ isOpen, onClose, onSuccess, unitMeas
       onClose && onClose()
     } catch (error) {
       console.error("Error updating unit measure:", error)
-      
+
       // Show specific error message from API
       if (error.response && error.response.data && error.response.data.message) {
         window.showToast(`Lỗi: ${error.response.data.message}`, "error")
@@ -109,7 +109,7 @@ export default function UpdateUnitMeasure({ isOpen, onClose, onSuccess, unitMeas
             <X className="h-5 w-5 text-gray-500" />
           </button>
         </div>
-        
+
         {/* Content */}
         <div className="p-6">
 

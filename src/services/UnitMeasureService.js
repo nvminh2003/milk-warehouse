@@ -55,7 +55,7 @@ export const updateUnitMeasure = async (data) => {
         unitMeasureId: data.unitMeasureId,
         status: data.status
     };
-    
+
     try {
         console.log("Sending update request:", body);
         console.log("Data types:", {
@@ -64,7 +64,7 @@ export const updateUnitMeasure = async (data) => {
             unitMeasureId: typeof body.unitMeasureId,
             status: typeof body.status
         });
-        
+
         const res = await api.put("/UnitMeasure/Update", body);
         console.log("UnitMeasure update API response:", res.data);
         return res.data;

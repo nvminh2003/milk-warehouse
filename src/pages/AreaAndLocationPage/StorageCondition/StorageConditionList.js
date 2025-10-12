@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Search, Plus, Edit, Trash2, Filter, ChevronDown } from "lucide-react";
 import CreateStorageCondition from "./CreateStorageConditionModal";
 import UpdateStorageCondition from "./UpdateStorageConditionModal";
-import DeleteModal from "../../../components/DeleteModal";
+import DeleteModal from "../../../components/Common/DeleteModal";
 
 // Type definition for StorageCondition
 const StorageCondition = {

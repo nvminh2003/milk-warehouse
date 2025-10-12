@@ -6,7 +6,8 @@ import { Button } from "../../components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
 import { Search, Plus, Edit, Trash2, Filter, ChevronDown, Eye } from "lucide-react";
 import CreateGood from "./CreateGoodModal";
-import DeleteModal from "../../components/DeleteModal";
+import UpdateGoodModal from "./UpdateGoodModal";
+import DeleteModal from "../../components/Common/DeleteModal";
 import { ProductDetail } from "./ViewGoodModal";
 
 // Type definition for Good
@@ -36,6 +37,7 @@ export default function GoodsPage() {
   const [showViewModal, setShowViewModal] = useState(false)
   const [itemToDelete, setItemToDelete] = useState(null)
   const [itemToUpdate, setItemToUpdate] = useState(null)
+  const [updateGoodId, setUpdateGoodId] = useState(null)
   const [itemToView, setItemToView] = useState(null)
   const [goodDetail, setGoodDetail] = useState(null)
   const [loadingDetail, setLoadingDetail] = useState(false)
@@ -50,7 +52,7 @@ export default function GoodsPage() {
   const fetchData = async (searchParams = {}) => {
     try {
       setLoading(true)
-      
+
       const response = await getGoods({
         pageNumber: searchParams.pageNumber !== undefined ? searchParams.pageNumber : 1,
         pageSize: searchParams.pageSize !== undefined ? searchParams.pageSize : 10,
@@ -59,7 +61,7 @@ export default function GoodsPage() {
         sortAscending: searchParams.sortAscending !== undefined ? searchParams.sortAscending : true,
         status: searchParams.status
       })
-      
+
       if (response && response.data) {
         // API returns response.data.items (array) and response.data.totalCount
         const dataArray = Array.isArray(response.data.items) ? response.data.items : []
@@ -113,10 +115,10 @@ export default function GoodsPage() {
   // Search with debounce
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      fetchData({ 
-        pageNumber: 1, 
-        pageSize: pagination.pageSize, 
-        search: searchQuery || "", 
+      fetchData({
+        pageNumber: 1,
+        pageSize: pagination.pageSize,
+        search: searchQuery || "",
         sortField: sortField,
         sortAscending: sortAscending,
         status: statusFilter
@@ -129,10 +131,10 @@ export default function GoodsPage() {
 
   // Filter by status
   useEffect(() => {
-    fetchData({ 
-      pageNumber: 1, 
-      pageSize: pagination.pageSize, 
-      search: searchQuery || "", 
+    fetchData({
+      pageNumber: 1,
+      pageSize: pagination.pageSize,
+      search: searchQuery || "",
       sortField: sortField,
       sortAscending: sortAscending,
       status: statusFilter
@@ -142,10 +144,10 @@ export default function GoodsPage() {
 
   // Sort when sortField or sortAscending changes
   useEffect(() => {
-    fetchData({ 
-      pageNumber: 1, 
-      pageSize: pagination.pageSize, 
-      search: searchQuery || "", 
+    fetchData({
+      pageNumber: 1,
+      pageSize: pagination.pageSize,
+      search: searchQuery || "",
       sortField: sortField,
       sortAscending: sortAscending,
       status: statusFilter
@@ -183,10 +185,10 @@ export default function GoodsPage() {
       setItemToView(good)
       setLoadingDetail(true)
       setShowViewModal(true)
-      
+
       const response = await getGoodDetail(good.goodsId)
       console.log("API Response:", response)
-      
+
       // Handle API response structure: { status: 200, message: "Success", data: {...} }
       if (response && response.status === 200 && response.data) {
         setGoodDetail(response.data)
@@ -207,6 +209,7 @@ export default function GoodsPage() {
 
   const handleUpdateClick = (good) => {
     setItemToUpdate(good)
+    setUpdateGoodId(good.goodsId)
     setShowUpdateModal(true)
   }
 
@@ -222,18 +225,18 @@ export default function GoodsPage() {
       window.showToast(`Đã xóa hàng hóa: ${itemToDelete?.goodsName || ''}`, "success")
       setShowDeleteModal(false)
       setItemToDelete(null)
-      
+
       // Calculate if current page will be empty after deletion
       const currentPageItemCount = goods.length
       const willPageBeEmpty = currentPageItemCount <= 1
-      
+
       // If current page will be empty and we're not on page 1, go to previous page
       let targetPage = pagination.pageNumber
       if (willPageBeEmpty && pagination.pageNumber > 1) {
         targetPage = pagination.pageNumber - 1
         setPagination(prev => ({ ...prev, pageNumber: targetPage }))
       }
-      
+
       // Refresh data after deletion, keeping current page or going to previous page if needed
       fetchData({
         pageNumber: targetPage,
@@ -245,7 +248,7 @@ export default function GoodsPage() {
       })
     } catch (error) {
       console.error("Error deleting good:", error)
-      
+
       // Show specific error message from API
       if (error.response && error.response.data && error.response.data.message) {
         window.showToast(`Lỗi: ${error.response.data.message}`, "error")
@@ -258,6 +261,22 @@ export default function GoodsPage() {
   const handleUpdateCancel = () => {
     setShowUpdateModal(false)
     setItemToUpdate(null)
+    setUpdateGoodId(null)
+  }
+
+  const handleUpdateSuccess = () => {
+    // Refresh data after successful update
+    fetchData({
+      pageNumber: pagination.pageNumber,
+      pageSize: pagination.pageSize,
+      search: searchQuery || "",
+      sortField: sortField,
+      sortAscending: sortAscending,
+      status: statusFilter
+    })
+    setShowUpdateModal(false)
+    setItemToUpdate(null)
+    setUpdateGoodId(null)
   }
 
   const handleDeleteCancel = () => {
@@ -284,7 +303,7 @@ export default function GoodsPage() {
   const handlePageSizeChange = (newPageSize) => {
     setPagination(prev => ({ ...prev, pageSize: newPageSize, pageNumber: 1 }))
     setShowPageSizeFilter(false)
-    
+
     // Refresh data with new page size
     fetchData({
       pageNumber: 1,
@@ -316,7 +335,7 @@ export default function GoodsPage() {
             <h1 className="text-3xl font-bold text-slate-900">Quản lý Hàng hóa</h1>
             <p className="text-slate-600 mt-1">Quản lý các hàng hóa sản phẩm trong hệ thống</p>
           </div>
-          <Button 
+          <Button
             className="bg-[#237486] hover:bg-[#1e5f6b] h-11 px-6 text-white"
             onClick={() => setShowCreateModal(true)}
           >
@@ -384,20 +403,18 @@ export default function GoodsPage() {
                         <div className="flex items-center space-x-2 cursor-pointer hover:bg-white/10 rounded p-1 -m-1" onClick={() => handleSort("goodsName")}>
                           <span>Tên hàng hóa</span>
                           <div className="flex flex-col">
-                            <ChevronDown 
-                              className={`h-3 w-3 transition-colors ${
-                                sortField === "goodsName" && sortAscending 
-                                  ? 'text-white' 
+                            <ChevronDown
+                              className={`h-3 w-3 transition-colors ${sortField === "goodsName" && sortAscending
+                                  ? 'text-white'
                                   : 'text-white/50'
-                              }`} 
+                                }`}
                               style={{ transform: 'translateY(1px)' }}
                             />
-                            <ChevronDown 
-                              className={`h-3 w-3 transition-colors ${
-                                sortField === "goodsName" && !sortAscending 
-                                  ? 'text-white' 
+                            <ChevronDown
+                              className={`h-3 w-3 transition-colors ${sortField === "goodsName" && !sortAscending
+                                  ? 'text-white'
                                   : 'text-white/50'
-                              }`} 
+                                }`}
                               style={{ transform: 'translateY(-1px) rotate(180deg)' }}
                             />
                           </div>
@@ -412,54 +429,53 @@ export default function GoodsPage() {
                       <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-24">
                         Đơn vị tính
                       </TableHead>
-                        <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-40">
-                          <div className="flex items-center justify-center space-x-2">
-                            <span>Trạng thái</span>
-                            <div className="relative status-filter-dropdown">
-                              <button
-                                onClick={() => setShowStatusFilter(!showStatusFilter)}
-                                className={`p-1 rounded hover:bg-white/20 transition-colors ${
-                                  statusFilter ? 'bg-white/30' : ''
+                      <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-40">
+                        <div className="flex items-center justify-center space-x-2">
+                          <span>Trạng thái</span>
+                          <div className="relative status-filter-dropdown">
+                            <button
+                              onClick={() => setShowStatusFilter(!showStatusFilter)}
+                              className={`p-1 rounded hover:bg-white/20 transition-colors ${statusFilter ? 'bg-white/30' : ''
                                 }`}
-                                title="Lọc theo trạng thái"
-                              >
-                                <Filter className="h-4 w-4" />
-                              </button>
-                              
-                              {showStatusFilter && (
-                                <div className="absolute top-full right-0 mt-1 w-48 bg-white rounded-md shadow-lg border z-10">
-                                  <div className="py-1">
-                                    <button
-                                      onClick={clearStatusFilter}
-                                      className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 flex items-center justify-between"
-                                    >
-                                      Tất cả
-                                      {!statusFilter && <span className="text-[#237486]">✓</span>}
-                                    </button>
-                                    <button
-                                      onClick={() => handleStatusFilter("1")}
-                                      className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 flex items-center justify-between"
-                                    >
-                                      Hoạt động
-                                      {statusFilter === "1" && <span className="text-[#237486]">✓</span>}
-                                    </button>
-                                    <button
-                                      onClick={() => handleStatusFilter("2")}
-                                      className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 flex items-center justify-between"
-                                    >
-                                      Ngừng hoạt động
-                                      {statusFilter === "2" && <span className="text-[#237486]">✓</span>}
-                                    </button>
-                                  </div>
+                              title="Lọc theo trạng thái"
+                            >
+                              <Filter className="h-4 w-4" />
+                            </button>
+
+                            {showStatusFilter && (
+                              <div className="absolute top-full right-0 mt-1 w-48 bg-white rounded-md shadow-lg border z-10">
+                                <div className="py-1">
+                                  <button
+                                    onClick={clearStatusFilter}
+                                    className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 flex items-center justify-between"
+                                  >
+                                    Tất cả
+                                    {!statusFilter && <span className="text-[#237486]">✓</span>}
+                                  </button>
+                                  <button
+                                    onClick={() => handleStatusFilter("1")}
+                                    className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 flex items-center justify-between"
+                                  >
+                                    Hoạt động
+                                    {statusFilter === "1" && <span className="text-[#237486]">✓</span>}
+                                  </button>
+                                  <button
+                                    onClick={() => handleStatusFilter("2")}
+                                    className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 flex items-center justify-between"
+                                  >
+                                    Ngừng hoạt động
+                                    {statusFilter === "2" && <span className="text-[#237486]">✓</span>}
+                                  </button>
                                 </div>
-                              )}
-                            </div>
+                              </div>
+                            )}
                           </div>
+                        </div>
                       </TableHead>
-                        <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 text-center">
-                          Hoạt động
-                        </TableHead>
-                      </TableRow>
+                      <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 text-center">
+                        Hoạt động
+                      </TableHead>
+                    </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredGoods.length > 0 ? (
@@ -480,31 +496,30 @@ export default function GoodsPage() {
                           <TableCell className="text-slate-700 px-4 py-3 first:pl-6 last:pr-6 border-0 w-32 text-center">{good?.companyName || ''}</TableCell>
                           <TableCell className="text-slate-700 px-4 py-3 first:pl-6 last:pr-6 border-0 w-24 text-center">{good?.unitMeasureName || ''}</TableCell>
                           <TableCell className="text-slate-700 px-4 py-3 first:pl-6 last:pr-6 border-0 w-40 text-center">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              good?.status === 1 
-                                ? 'bg-green-100 text-green-800' 
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${good?.status === 1
+                                ? 'bg-green-100 text-green-800'
                                 : 'bg-red-100 text-red-800'
-                            }`}>
+                              }`}>
                               {good?.status === 1 ? 'Hoạt động' : 'Ngừng hoạt động'}
                             </span>
                           </TableCell>
                           <TableCell className="text-slate-600 px-4 py-3 first:pl-6 last:pr-6 border-0 text-center">
                             <div className="flex items-center justify-center space-x-2">
-                              <button 
+                              <button
                                 className="p-1 hover:bg-slate-100 rounded transition-colors"
                                 title="Xem chi tiết"
                                 onClick={() => handleViewClick(good)}
                               >
                                 <Eye className="h-4 w-4 text-[#1a7b7b]" />
                               </button>
-                              <button 
+                              <button
                                 className="p-1 hover:bg-slate-100 rounded transition-colors"
                                 title="Chỉnh sửa"
                                 onClick={() => handleUpdateClick(good)}
                               >
                                 <Edit className="h-4 w-4 text-[#1a7b7b]" />
                               </button>
-                              <button 
+                              <button
                                 className="p-1 hover:bg-slate-100 rounded transition-colors"
                                 title="Xóa"
                                 onClick={() => handleDeleteClick(good)}
@@ -537,7 +552,7 @@ export default function GoodsPage() {
                 <div className="text-sm text-slate-600">
                   Hiển thị {((pagination.pageNumber - 1) * pagination.pageSize) + 1} - {Math.min(pagination.pageNumber * pagination.pageSize, pagination.totalCount)} trong tổng số {pagination.totalCount} hàng hóa
                 </div>
-                
+
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center space-x-2">
                     <Button
@@ -545,8 +560,8 @@ export default function GoodsPage() {
                       size="sm"
                       onClick={() => {
                         if (pagination.pageNumber > 1) {
-                          fetchData({ 
-                            pageNumber: pagination.pageNumber - 1, 
+                          fetchData({
+                            pageNumber: pagination.pageNumber - 1,
                             pageSize: pagination.pageSize,
                             search: searchQuery || "",
                             sortField: sortField,
@@ -568,8 +583,8 @@ export default function GoodsPage() {
                       size="sm"
                       onClick={() => {
                         if (pagination.pageNumber < Math.ceil(pagination.totalCount / pagination.pageSize)) {
-                          fetchData({ 
-                            pageNumber: pagination.pageNumber + 1, 
+                          fetchData({
+                            pageNumber: pagination.pageNumber + 1,
                             pageSize: pagination.pageSize,
                             search: searchQuery || "",
                             sortField: sortField,
@@ -584,7 +599,7 @@ export default function GoodsPage() {
                       Sau
                     </Button>
                   </div>
-                  
+
                   {/* Page Size Selector */}
                   <div className="flex items-center space-x-2">
                     <span className="text-sm text-slate-600">Hiển thị:</span>
@@ -596,7 +611,7 @@ export default function GoodsPage() {
                         <span>{pagination.pageSize}</span>
                         <ChevronDown className="h-4 w-4" />
                       </button>
-                      
+
                       {showPageSizeFilter && (
                         <div className="absolute bottom-full right-0 mb-1 w-20 bg-white rounded-md shadow-lg border z-10">
                           <div className="py-1">
@@ -604,9 +619,8 @@ export default function GoodsPage() {
                               <button
                                 key={size}
                                 onClick={() => handlePageSizeChange(size)}
-                                className={`w-full text-left px-3 py-2 text-sm hover:bg-slate-100 flex items-center justify-between ${
-                                  pagination.pageSize === size ? 'bg-[#237486] text-white' : 'text-slate-700'
-                                }`}
+                                className={`w-full text-left px-3 py-2 text-sm hover:bg-slate-100 flex items-center justify-between ${pagination.pageSize === size ? 'bg-[#237486] text-white' : 'text-slate-700'
+                                  }`}
                               >
                                 {size}
                                 {pagination.pageSize === size && <span className="text-white">✓</span>}
@@ -632,13 +646,13 @@ export default function GoodsPage() {
         onSuccess={handleCreateSuccess}
       />
 
-      {/* Update Good Modal - Tạm thời comment out vì chưa có */}
-      {/* <UpdateGood
+      {/* Update Good Modal */}
+      <UpdateGoodModal
         isOpen={showUpdateModal}
         onClose={handleUpdateCancel}
-        onSuccess={handleCreateSuccess}
-        goodData={itemToUpdate}
-      /> */}
+        onSuccess={handleUpdateSuccess}
+        goodId={updateGoodId}
+      />
 
       {/* Delete Confirmation Modal */}
       <DeleteModal
@@ -657,8 +671,8 @@ export default function GoodsPage() {
                 <div className="text-slate-600">Đang tải chi tiết hàng hóa...</div>
               </div>
             ) : goodDetail ? (
-              <ProductDetail 
-                product={goodDetail} 
+              <ProductDetail
+                product={goodDetail}
                 onClose={handleViewClose}
               />
             ) : (

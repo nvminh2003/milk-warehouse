@@ -51,12 +51,12 @@ const Sidebar = ({ collapsed, isMobile }) => {
             label: "Quản lý đối tác",
             children: [
                 {
-                    key: "/sales-manager/supplier",
+                    key: "/sales-manager/suppliers",
                     icon: <ComponentIcon name="supplier" size={15} collapsed={collapsed} />,
                     label: "Quản lý nhà cung cấp",
                 },
                 {
-                    key: "/sales-manager/retailer",
+                    key: "/sales-manager/retailers",
                     icon: <ComponentIcon name="retailer" size={15} collapsed={collapsed} />,
                     label: "Quản lý nhà bán lẻ",
                 },

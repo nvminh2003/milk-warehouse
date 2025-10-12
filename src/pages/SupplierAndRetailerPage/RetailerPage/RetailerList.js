@@ -1,36 +1,43 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { getUnitMeasure, deleteUnitMeasure, createUnitMeasure, updateUnitMeasure } from "../../services/UnitMeasureService";
-import { Card, CardContent } from "../../components/ui/card";
-import { Input } from "../../components/ui/input";
-import { Button } from "../../components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
-import { Search, Plus, Edit, Trash2, Filter, ChevronDown } from "lucide-react";
-import CreateUnitMeasure from "./CreateUnitMeasureModal";
-import UpdateUnitMeasure from "./UpdateUnitMeasureModal";
-import DeleteModal from "../../components/Common/DeleteModal";
+import { getRetailers, getRetailerDetail } from "../../../services/RetailerService";
+import { Card, CardContent } from "../../../components/ui/card";
+import { Input } from "../../../components/ui/input";
+import { Button } from "../../../components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../../components/ui/table";
+import { Search, Plus, Edit, Trash2, Filter, ChevronDown, Eye } from "lucide-react";
+import { RetailerDetail } from "./ViewRetailerModal";
+import DeleteModal from "../../../components/Common/DeleteModal";
+// import CreateSupplier from "./CreateSupplierModal";
+// import UpdateSupplier from "./UpdateSupplierModal";
 
-// Type definition for UnitMeasure
-const UnitMeasure = {
-  name: "",
-  description: "",
+// Type definition for Retailer
+const Retailer = {
+  retailerId: "",
+  companyName: "",
+  brandName: "",
   status: null,
   createdAt: "",
+  updateAt: ""
 };
 
 
-export default function UnitMeasuresPage() {
+export default function RetailersPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("")
   const [showStatusFilter, setShowStatusFilter] = useState(false)
   const [sortField, setSortField] = useState("")
   const [sortAscending, setSortAscending] = useState(true)
-  const [unitMeasures, setUnitMeasures] = useState([])
+  const [retailers, setRetailers] = useState([])
   const [loading, setLoading] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showUpdateModal, setShowUpdateModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showViewModal, setShowViewModal] = useState(false)
   const [itemToDelete, setItemToDelete] = useState(null)
   const [itemToUpdate, setItemToUpdate] = useState(null)
+  const [itemToView, setItemToView] = useState(null)
+  const [retailerDetail, setRetailerDetail] = useState(null)
+  const [loadingDetail, setLoadingDetail] = useState(false)
   const [pagination, setPagination] = useState({
     pageNumber: 1,
     pageSize: 10,
@@ -42,7 +49,9 @@ export default function UnitMeasuresPage() {
   const fetchData = async (searchParams = {}) => {
     try {
       setLoading(true)
-      const response = await getUnitMeasure({
+
+
+      const response = await getRetailers({
         pageNumber: searchParams.pageNumber !== undefined ? searchParams.pageNumber : 1,
         pageSize: searchParams.pageSize !== undefined ? searchParams.pageSize : 10,
         search: searchParams.search !== undefined ? searchParams.search : "",
@@ -51,44 +60,21 @@ export default function UnitMeasuresPage() {
         status: searchParams.status
       })
 
-      console.log("Full response from getUnitMeasure:", response);
-      console.log("Response.data:", response?.data);
-
       if (response && response.data) {
-        // Check different possible response structures
-        let dataArray = [];
-        let totalCount = 0;
-
-        if (Array.isArray(response.data.items)) {
-          // Structure: { data: { items: [...], totalCount: number } }
-          dataArray = response.data.items;
-          totalCount = response.data.totalCount || dataArray.length;
-        } else if (Array.isArray(response.data)) {
-          // Structure: { data: [...] }
-          dataArray = response.data;
-          totalCount = dataArray.length;
-        } else if (response.data.data && Array.isArray(response.data.data)) {
-          // Structure: { data: { data: [...], totalCount: number } }
-          dataArray = response.data.data;
-          totalCount = response.data.totalCount || dataArray.length;
-        }
-
-        console.log("Parsed dataArray:", dataArray);
-        console.log("Parsed totalCount:", totalCount);
-
-        setUnitMeasures(dataArray)
+        // API returns response.data.items (array) and response.data.totalCount
+        const dataArray = Array.isArray(response.data.items) ? response.data.items : []
+        setRetailers(dataArray)
         setPagination(prev => ({
           ...prev,
-          totalCount: totalCount
+          totalCount: response.data.totalCount || dataArray.length
         }))
       } else {
-        console.log("No response or response.data");
-        setUnitMeasures([])
+        setRetailers([])
         setPagination(prev => ({ ...prev, totalCount: 0 }))
       }
     } catch (error) {
-      console.error("Error fetching unit measures:", error)
-      setUnitMeasures([])
+      console.error("Error fetching retailers:", error)
+      setRetailers([])
       setPagination(prev => ({ ...prev, totalCount: 0 }))
     } finally {
       setLoading(false)
@@ -168,17 +154,17 @@ export default function UnitMeasuresPage() {
   }, [sortField, sortAscending])
 
   // Remove client-side filtering since backend already handles search and filter
-  const filteredUnitMeasures = useMemo(() => {
-    // Just return the unit measures from API as they are already filtered
-    return Array.isArray(unitMeasures) ? unitMeasures : []
-  }, [unitMeasures])
+  const filteredRetailers = useMemo(() => {
+    // Just return the retailers from API as they are already filtered
+    return Array.isArray(retailers) ? retailers : []
+  }, [retailers])
 
-  const activeCount = Array.isArray(unitMeasures) ? unitMeasures.filter((c) => c.status === 1).length : 0
-  const inactiveCount = Array.isArray(unitMeasures) ? unitMeasures.filter((c) => c.status === 2).length : 0
+  const activeCount = Array.isArray(retailers) ? retailers.filter((r) => r.status === 1).length : 0
+  const inactiveCount = Array.isArray(retailers) ? retailers.filter((r) => r.status === 2).length : 0
 
   const handleCreateSuccess = () => {
-    // Set sort to name descending to show new record at top
-    setSortField("Name")
+    // Set sort to retailerName descending to show new record at top
+    setSortField("retailerName")
     setSortAscending(false)
 
     // Refresh data after successful creation with new sort
@@ -186,32 +172,60 @@ export default function UnitMeasuresPage() {
       pageNumber: 1,
       pageSize: pagination.pageSize,
       search: searchQuery || "",
-      sortField: "Name",
+      sortField: "retailerName",
       sortAscending: false,
       status: statusFilter
     })
   }
 
-  const handleUpdateClick = (unitMeasure) => {
-    setItemToUpdate(unitMeasure)
+  const handleViewClick = async (retailer) => {
+    try {
+      console.log("Viewing retailer:", retailer)
+      setItemToView(retailer)
+      setLoadingDetail(true)
+      setShowViewModal(true)
+
+      const response = await getRetailerDetail(retailer.retailerId)
+      console.log("API Response:", response)
+
+      // Handle API response structure: { status: 200, message: "Success", data: {...} }
+      if (response && response.status === 200 && response.data) {
+        setRetailerDetail(response.data)
+        console.log("Retailer detail set:", response.data)
+      } else {
+        console.log("Invalid response structure:", response)
+        window.showToast("Không thể tải chi tiết nhà bán lẻ", "error")
+        setShowViewModal(false)
+      }
+    } catch (error) {
+      console.error("Error fetching retailer detail:", error)
+      window.showToast("Có lỗi xảy ra khi tải chi tiết nhà bán lẻ", "error")
+      setShowViewModal(false)
+    } finally {
+      setLoadingDetail(false)
+    }
+  }
+
+  const handleUpdateClick = (retailer) => {
+    setItemToUpdate(retailer)
     setShowUpdateModal(true)
   }
 
-  const handleDeleteClick = (unitMeasure) => {
-    setItemToDelete(unitMeasure)
+  const handleDeleteClick = (retailer) => {
+    setItemToDelete(retailer)
     setShowDeleteModal(true)
   }
 
   const handleDeleteConfirm = async () => {
     try {
-      console.log("Deleting unit measure:", itemToDelete)
-      await deleteUnitMeasure(itemToDelete?.unitMeasureId)
-      window.showToast(`Đã xóa đơn vị đo: ${itemToDelete?.name || ''}`, "success")
+      console.log("Deleting retailer:", itemToDelete)
+      // await deleteRetailer(itemToDelete?.retailerId) // Cần thêm API delete
+      window.showToast(`Đã xóa nhà bán lẻ: ${itemToDelete?.retailerName || ''}`, "success")
       setShowDeleteModal(false)
       setItemToDelete(null)
 
       // Calculate if current page will be empty after deletion
-      const currentPageItemCount = unitMeasures.length
+      const currentPageItemCount = retailers.length
       const willPageBeEmpty = currentPageItemCount <= 1
 
       // If current page will be empty and we're not on page 1, go to previous page
@@ -231,13 +245,13 @@ export default function UnitMeasuresPage() {
         status: statusFilter
       })
     } catch (error) {
-      console.error("Error deleting unit measure:", error)
+      console.error("Error deleting retailer:", error)
 
       // Show specific error message from API
       if (error.response && error.response.data && error.response.data.message) {
         window.showToast(`Lỗi: ${error.response.data.message}`, "error")
       } else {
-        window.showToast("Có lỗi xảy ra khi xóa đơn vị đo", "error")
+        window.showToast("Có lỗi xảy ra khi xóa nhà bán lẻ", "error")
       }
     }
   }
@@ -288,21 +302,27 @@ export default function UnitMeasuresPage() {
     }
   }
 
+  const handleViewClose = () => {
+    setShowViewModal(false)
+    setItemToView(null)
+    setRetailerDetail(null)
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Quản lý Đơn vị đo</h1>
-            <p className="text-slate-600 mt-1">Quản lý các đơn vị đo sản phẩm trong hệ thống</p>
+            <h1 className="text-3xl font-bold text-slate-900">Quản lý Nhà bán lẻ</h1>
+            <p className="text-slate-600 mt-1">Quản lý các nhà bán lẻ trong hệ thống</p>
           </div>
           <Button
             className="bg-[#237486] hover:bg-[#1e5f6b] h-11 px-6 text-white"
             onClick={() => setShowCreateModal(true)}
           >
             <Plus className="mr-2 h-4 w-4" />
-            Thêm đơn vị đo
+            Thêm nhà bán lẻ
           </Button>
         </div>
 
@@ -310,7 +330,7 @@ export default function UnitMeasuresPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="border-l-4 border-l-[#237486]">
             <CardContent className="pt-6">
-              <div className="text-sm font-medium text-slate-600">Tổng đơn vị đo</div>
+              <div className="text-sm font-medium text-slate-600">Tổng nhà bán lẻ</div>
               <div className="text-3xl font-bold text-slate-900 mt-2">{pagination.totalCount}</div>
             </CardContent>
           </Card>
@@ -334,7 +354,7 @@ export default function UnitMeasuresPage() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
               <Input
-                placeholder="Tìm kiếm theo tên hoặc mô tả đơn vị đo..."
+                placeholder="Tìm kiếm theo tên công ty hoặc thương hiệu..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 h-12 text-base"
@@ -343,7 +363,7 @@ export default function UnitMeasuresPage() {
           </CardContent>
         </Card>
 
-        {/* Unit Measures Table */}
+        {/* Retailers Table */}
         <Card className="shadow-lg overflow-hidden p-0">
           <div className="w-full">
             {loading ? (
@@ -358,29 +378,29 @@ export default function UnitMeasuresPage() {
                       <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-20">
                         STT
                       </TableHead>
-                      <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-40">
-                        <div className="flex items-center space-x-2 cursor-pointer hover:bg-white/10 rounded p-1 -m-1" onClick={() => handleSort("name")}>
-                          <span>Tên đơn vị đo</span>
+                      <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-96">
+                        <div className="flex items-center space-x-2 cursor-pointer hover:bg-white/10 rounded p-1 -m-1" onClick={() => handleSort("retailerName")}>
+                          <span>Tên nhà bán lẻ</span>
                           <div className="flex flex-col">
                             <ChevronDown
-                              className={`h-3 w-3 transition-colors ${sortField === "name" && sortAscending
-                                ? 'text-white'
-                                : 'text-white/50'
+                              className={`h-3 w-3 transition-colors ${sortField === "retailerName" && sortAscending
+                                  ? 'text-white'
+                                  : 'text-white/50'
                                 }`}
                               style={{ transform: 'translateY(1px)' }}
                             />
                             <ChevronDown
-                              className={`h-3 w-3 transition-colors ${sortField === "name" && !sortAscending
-                                ? 'text-white'
-                                : 'text-white/50'
+                              className={`h-3 w-3 transition-colors ${sortField === "retailerName" && !sortAscending
+                                  ? 'text-white'
+                                  : 'text-white/50'
                                 }`}
                               style={{ transform: 'translateY(-1px) rotate(180deg)' }}
                             />
                           </div>
                         </div>
                       </TableHead>
-                      <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0">
-                        Mô tả
+                      <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-40">
+                        Số điện thoại
                       </TableHead>
                       <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-40">
                         <div className="flex items-center justify-center space-x-2">
@@ -425,17 +445,14 @@ export default function UnitMeasuresPage() {
                           </div>
                         </div>
                       </TableHead>
-                      <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-40">
-                        Ngày tạo
-                      </TableHead>
                       <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 text-center">
                         Hoạt động
                       </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredUnitMeasures.length > 0 ? (
-                      filteredUnitMeasures.map((unitMeasure, index) => (
+                    {filteredRetailers.length > 0 ? (
+                      filteredRetailers.map((retailer, index) => (
                         <TableRow
                           key={index}
                           className={`
@@ -446,30 +463,36 @@ export default function UnitMeasuresPage() {
                           <TableCell className="text-slate-600 px-4 py-3 first:pl-6 last:pr-6 border-0 w-20 text-center font-medium">
                             {index + 1}
                           </TableCell>
-                          <TableCell className="font-medium text-slate-900 px-4 py-3 first:pl-6 last:pr-6 border-0 w-40">{unitMeasure?.name || ''}</TableCell>
-                          <TableCell className="text-slate-700 px-4 py-3 first:pl-6 last:pr-6 border-0">{unitMeasure?.description || ''}</TableCell>
+                          <TableCell className="font-medium text-slate-900 px-4 py-3 first:pl-6 last:pr-6 border-0 w-96">{retailer?.retailerName || ''}</TableCell>
+                          <TableCell className="text-slate-700 px-4 py-3 first:pl-6 last:pr-6 border-0 w-40 text-center">{retailer?.phone || ''}</TableCell>
                           <TableCell className="text-slate-700 px-4 py-3 first:pl-6 last:pr-6 border-0 w-40 text-center">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${unitMeasure?.status === 1
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${retailer?.status === 1
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-red-100 text-red-800'
                               }`}>
-                              {unitMeasure?.status === 1 ? 'Hoạt động' : 'Ngừng hoạt động'}
+                              {retailer?.status === 1 ? 'Hoạt động' : 'Ngừng hoạt động'}
                             </span>
                           </TableCell>
-                          <TableCell className="text-slate-600 px-4 py-3 first:pl-6 last:pr-6 border-0 w-40">{unitMeasure?.createdAt || ''}</TableCell>
                           <TableCell className="text-slate-600 px-4 py-3 first:pl-6 last:pr-6 border-0 text-center">
                             <div className="flex items-center justify-center space-x-2">
                               <button
                                 className="p-1 hover:bg-slate-100 rounded transition-colors"
+                                title="Xem chi tiết"
+                                onClick={() => handleViewClick(retailer)}
+                              >
+                                <Eye className="h-4 w-4 text-[#1a7b7b]" />
+                              </button>
+                              <button
+                                className="p-1 hover:bg-slate-100 rounded transition-colors"
                                 title="Chỉnh sửa"
-                                onClick={() => handleUpdateClick(unitMeasure)}
+                                onClick={() => handleUpdateClick(retailer)}
                               >
                                 <Edit className="h-4 w-4 text-[#1a7b7b]" />
                               </button>
                               <button
                                 className="p-1 hover:bg-slate-100 rounded transition-colors"
                                 title="Xóa"
-                                onClick={() => handleDeleteClick(unitMeasure)}
+                                onClick={() => handleDeleteClick(retailer)}
                               >
                                 <Trash2 className="h-4 w-4 text-red-500" />
                               </button>
@@ -479,8 +502,8 @@ export default function UnitMeasuresPage() {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-12 text-slate-500">
-                          Không tìm thấy đơn vị đo nào
+                        <TableCell colSpan={5} className="text-center py-12 text-slate-500">
+                          Không tìm thấy nhà bán lẻ nào
                         </TableCell>
                       </TableRow>
                     )}
@@ -497,7 +520,7 @@ export default function UnitMeasuresPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div className="text-sm text-slate-600">
-                  Hiển thị {((pagination.pageNumber - 1) * pagination.pageSize) + 1} - {Math.min(pagination.pageNumber * pagination.pageSize, pagination.totalCount)} trong tổng số {pagination.totalCount} đơn vị đo
+                  Hiển thị {((pagination.pageNumber - 1) * pagination.pageSize) + 1} - {Math.min(pagination.pageNumber * pagination.pageSize, pagination.totalCount)} trong tổng số {pagination.totalCount} nhà bán lẻ
                 </div>
 
                 <div className="flex items-center space-x-4">
@@ -586,28 +609,50 @@ export default function UnitMeasuresPage() {
         )}
       </div>
 
-      {/* Create Unit Measure Modal */}
-      <CreateUnitMeasure
+      {/* Create Supplier Modal */}
+      {/* <CreateSupplier
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onSuccess={handleCreateSuccess}
-      />
+      /> */}
 
-      {/* Update Unit Measure Modal */}
-      <UpdateUnitMeasure
+      {/* Update Retailer Modal - Tạm thời tắt vì chưa có component */}
+      {/* <UpdateRetailer
         isOpen={showUpdateModal}
         onClose={handleUpdateCancel}
         onSuccess={handleCreateSuccess}
-        unitMeasureData={itemToUpdate}
-      />
+        retailerData={itemToUpdate}
+      /> */}
 
       {/* Delete Confirmation Modal */}
       <DeleteModal
         isOpen={showDeleteModal}
         onClose={handleDeleteCancel}
         onConfirm={handleDeleteConfirm}
-        itemName={itemToDelete?.name || ""}
+        itemName={itemToDelete?.retailerName || ""}
       />
+
+      {/* View Retailer Detail Modal */}
+      {showViewModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            {loadingDetail ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-slate-600">Đang tải chi tiết nhà bán lẻ...</div>
+              </div>
+            ) : retailerDetail ? (
+              <RetailerDetail
+                retailer={retailerDetail}
+                onClose={handleViewClose}
+              />
+            ) : (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-slate-600">Không có dữ liệu để hiển thị</div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
