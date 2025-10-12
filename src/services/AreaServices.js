@@ -12,27 +12,30 @@ export const getAreas = async (searchParams = {}) => {
                 searchParams.sortAscending !== undefined
                     ? searchParams.sortAscending
                     : true,
-            // Build filters object: support status and isAvailable
+            // Build filters object: support status
             filters: {},
         };
 
-        if (searchParams.status !== undefined && searchParams.status !== "") {
-            body.filters.status = searchParams.status;
+    // Handle filters from searchParams.filters object
+    if (searchParams.filters) {
+        if (searchParams.filters.status !== undefined && searchParams.filters.status !== "") {
+            body.filters.status = searchParams.filters.status.toString();
         }
-        if (searchParams.isAvailable !== undefined && searchParams.isAvailable !== "") {
-            body.filters.isAvailable = searchParams.isAvailable;
-        }
+    }
+
+    // Also support direct status parameter for backward compatibility
+    if (searchParams.status !== undefined && searchParams.status !== "") {
+        body.filters.status = searchParams.status.toString();
+    }
 
         const res = await api.post("/Area/Areas", body);
-        console.log("Area API response:", res.data);
-        console.log("Search params received:", searchParams);
-
-        // API sometimes returns the payload directly in res.data or nested in res.data.data
-        // Normalize to an object with { items, totalCount, ... }
-        const payload = res?.data?.data ?? res?.data ?? { items: [], totalCount: 0 };
-        return payload;
+        return res?.data?.data ?? res?.data ?? { items: [], totalCount: 0 };
     } catch (error) {
         console.error("Error fetching Areas:", error);
+        if (error.response) {
+            console.error("Error response data:", error.response.data);
+            console.error("Error response status:", error.response.status);
+        }
         return { items: [], totalCount: 0 };
     }
 };
@@ -41,14 +44,11 @@ export const getAreas = async (searchParams = {}) => {
 export const createArea = async (data) => {
     try {
         const body = {
-            AreaId: data.AreaId,
-            AreaId: data.AreaId,
-            AreaCode: data.AreaCode,
-            Rack: data.Rack,
-            Row: data.Row,
-            Column: data.Column,
-            IsAvailable: data.IsAvailable,
-            Status: data.Status,
+            AreaName: data.areaName,
+            AreaCode: data.areaCode,
+            Description: data.description,
+            StorageConditionId: data.storageConditionId,
+            Status: data.status,
         };
 
         const res = await api.post("/Area/Create", body);
@@ -65,21 +65,18 @@ export const createArea = async (data) => {
 };
 
 // Cập nhật Area
-export const updateArea = async (data) => {
+export const updateArea = async (areaId, data) => {
     const body = {
-        AreaId: data.AreaId,
-        AreaId: data.AreaId,
-        AreaCode: data.AreaCode,
-        Rack: data.Rack,
-        Row: data.Row,
-        Column: data.Column,
-        IsAvailable: data.IsAvailable,
-        Status: data.Status,
+        AreaName: data.areaName,
+        AreaCode: data.areaCode,
+        Description: data.description,
+        StorageConditionId: data.storageConditionId,
+        Status: data.status,
     };
 
     try {
         console.log("Sending update request:", body);
-        const res = await api.put(`/Area/Update/${data.AreaId}`, body);
+        const res = await api.put(`/Area/Update/${areaId}`, body);
         console.log("Area Update API response:", res.data);
         return res.data;
     } catch (error) {

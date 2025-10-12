@@ -1,14 +1,17 @@
-import React, { useEffect, useState } from "react";
-import { Button, Space, Tag, Modal, Form, message, Divider, Row, Col, Select, Input as AntInput, InputNumber } from "antd";
-import { CheckCircleOutlined, ThunderboltOutlined } from "@ant-design/icons";
+import React, { useEffect, useState, useCallback } from "react";
+import { Button, Space, Tag, Form, message } from "antd";
 import { getLocations, createLocation, updateLocation, deleteLocation } from "../../../services/LocationServices";
 import { getAreas } from "../../../services/AreaServices";
-import { Edit, Trash2, Search, Filter, ChevronDown, Plus } from "lucide-react";
+import { Edit, Trash2, ChevronDown, Plus } from "lucide-react";
 import DeleteModal from "../../../components/Common/DeleteModal";
+import SearchBar from "../../../components/Common/SearchBar";
+import FilterDropdown from "../../../components/Common/FilterDropdown";
+import Pagination from "../../../components/Common/Pagination";
+import CreateLocationModal from "./CreateLocationModal";
+import UpdateLocationModal from "./UpdateLocationModal";
 import { Card, CardContent } from "../../../components/ui/card";
 import { Table as CustomTable, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../../components/ui/table";
 
-const { Option } = Select;
 
 const LocationList = () => {
     const [locations, setLocations] = useState([]);
@@ -23,17 +26,14 @@ const LocationList = () => {
 
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [itemToDelete, setItemToDelete] = useState(null);
-    const [isModalVisible, setIsModalVisible] = useState(false);
-    const [isEdit, setIsEdit] = useState(false);
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [showUpdateModal, setShowUpdateModal] = useState(false);
     const [editingLocation, setEditingLocation] = useState(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState("");
-    const [showStatusFilter, setShowStatusFilter] = useState(false);
     const [statusTypeFilter, setStatusTypeFilter] = useState("");
-    const [showStatusTypeFilter, setShowStatusTypeFilter] = useState(false);
     const [sortField, setSortField] = useState("");
     const [sortAscending, setSortAscending] = useState(true);
-    const [showPageSizeFilter, setShowPageSizeFilter] = useState(false);
 
     const fetchLocations = async (page = 1, pageSize = 10, params = {}) => {
         try {
@@ -75,7 +75,7 @@ const LocationList = () => {
     };
 
     useEffect(() => {
-        fetchLocations(pagination.current, pagination.pageSize);
+        fetchLocations(1, 10);
     }, []);
 
     useEffect(() => {
@@ -91,70 +91,88 @@ const LocationList = () => {
     }, []);
 
     // Callback khi filter thay đổi
-    const handleFilterChange = (params) => {
+    const handleFilterChange = useCallback((params) => {
         setPagination((p) => ({ ...p, current: 1 }));
         fetchLocations(1, pagination.pageSize, params);
+    }, [pagination.pageSize]);
+
+    // Search input change handler
+    const handleSearchInputChange = (e) => {
+        setSearchQuery(e.target.value);
     };
 
-    // Close status filter dropdown when clicking outside
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (showStatusFilter && !event.target.closest('.status-filter-dropdown')) {
-                setShowStatusFilter(false);
-            }
-            if (showStatusTypeFilter && !event.target.closest('.status-type-filter-dropdown')) {
-                setShowStatusTypeFilter(false);
-            }
-            if (showPageSizeFilter && !event.target.closest('.page-size-filter-dropdown')) {
-                setShowPageSizeFilter(false);
-            }
-        };
-
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, [showStatusFilter, showStatusTypeFilter, showPageSizeFilter]);
-
-    // Search with debounce
+    // Debounced search effect
     useEffect(() => {
         const timeoutId = setTimeout(() => {
-            fetchLocations(1, pagination.pageSize, {
+            handleFilterChange({
                 search: searchQuery,
                 filters: { 
                     isAvailable: statusFilter ? statusFilter === "true" : undefined,
                     status: statusTypeFilter ? Number(statusTypeFilter) : undefined
                 }
             });
-            setPagination((p) => ({ ...p, current: 1 }));
         }, 500);
 
         return () => clearTimeout(timeoutId);
-    }, [searchQuery, statusFilter, statusTypeFilter]);
+    }, [searchQuery, statusFilter, statusTypeFilter, handleFilterChange]);
 
     const handleStatusFilter = (status) => {
         setStatusFilter(status);
-        setShowStatusFilter(false);
+        handleFilterChange({
+            search: searchQuery,
+            filters: { 
+                isAvailable: status ? status === "true" : undefined,
+                status: statusTypeFilter ? Number(statusTypeFilter) : undefined
+            }
+        });
     };
 
     const clearStatusFilter = () => {
         setStatusFilter("");
-        setShowStatusFilter(false);
+        handleFilterChange({
+            search: searchQuery,
+            filters: { 
+                isAvailable: undefined,
+                status: statusTypeFilter ? Number(statusTypeFilter) : undefined
+            }
+        });
     };
 
     const handleStatusTypeFilter = (status) => {
         setStatusTypeFilter(status);
-        setShowStatusTypeFilter(false);
+        handleFilterChange({
+            search: searchQuery,
+            filters: { 
+                isAvailable: statusFilter ? statusFilter === "true" : undefined,
+                status: status ? Number(status) : undefined
+            }
+        });
     };
 
     const clearStatusTypeFilter = () => {
         setStatusTypeFilter("");
-        setShowStatusTypeFilter(false);
+        handleFilterChange({
+            search: searchQuery,
+            filters: { 
+                isAvailable: statusFilter ? statusFilter === "true" : undefined,
+                status: undefined
+            }
+        });
+    };
+
+    const handlePageChange = (newPage) => {
+        setPagination(prev => ({ ...prev, current: newPage }));
+        fetchLocations(newPage, pagination.pageSize, {
+            search: searchQuery,
+            filters: { 
+                isAvailable: statusFilter ? statusFilter === "true" : undefined,
+                status: statusTypeFilter ? Number(statusTypeFilter) : undefined
+            }
+        });
     };
 
     const handlePageSizeChange = (newPageSize) => {
         setPagination(prev => ({ ...prev, pageSize: newPageSize, current: 1 }));
-        setShowPageSizeFilter(false);
         fetchLocations(1, newPageSize, {
             search: searchQuery,
             filters: { 
@@ -175,15 +193,13 @@ const LocationList = () => {
 
     // Open modal for create
     const handleOpenCreate = () => {
-        setIsEdit(false);
         form.resetFields();
-        setIsModalVisible(true);
+        setShowCreateModal(true);
     };
 
     // Open modal for update
     const handleOpenEdit = (record) => {
         console.log("Editing record:", record);
-        setIsEdit(true);
         setEditingLocation(record);
         const selectedArea = areas.find(a => a.areaId === record.areaId);
 
@@ -196,43 +212,34 @@ const LocationList = () => {
             isAvailable: record.isAvailable,
             status: record.status,
         });
-        setIsModalVisible(true);
+        setShowUpdateModal(true);
     };
 
-    // Submit create or update
-    const handleSubmit = async () => {
+    // Submit create
+    const handleCreateSubmit = async () => {
         try {
             const values = await form.validateFields();
             console.log("Form values:", values);
 
             const payload = {
-                LocationId: editingLocation?.locationId, // lấy từ record edit
                 AreaId: Number(values.areaId),
                 LocationCode: values.locationCode,
                 Rack: values.rack,
                 Row: values.row,
                 Column: values.column,
                 IsAvailable: values.isAvailable,
-                Status: isEdit ? Number(values.status) : 1,
+                Status: 1,
             };
 
-            console.log("Sending update request:", payload);
+            console.log("Sending create request:", payload);
 
-            if (isEdit) {
-                await updateLocation(payload);
-                window.showToast(
-                    `Đã cập nhật vị trí: ${payload.LocationCode || ''}`,
-                    "success"
-                );
-            } else {
-                await createLocation(payload);
-                window.showToast(
-                    `Đã tạo vị trí mới: ${payload.LocationCode || ''}`,
-                    "success"
-                );
-            }
+            await createLocation(payload);
+            window.showToast(
+                `Đã tạo vị trí mới: ${payload.LocationCode || ''}`,
+                "success"
+            );
 
-            setIsModalVisible(false);
+            setShowCreateModal(false);
             fetchLocations(pagination.current, pagination.pageSize, {
                 search: searchQuery,
                 filters: { 
@@ -241,7 +248,54 @@ const LocationList = () => {
                 }
             });
         } catch (error) {
-            console.error("Error submitting form:", error);
+            console.error("Error creating location:", error);
+            const errorMsg =
+                error?.response?.data?.message?.replace(/^\[.*?\]\s*/, "") ||
+                error?.message ||
+                "Có lỗi xảy ra, vui lòng thử lại!";
+
+            const cleanMsg = errorMsg.replace(/^\[[^\]]*\]\s*/, "")
+
+            window.showToast(cleanMsg, "error");
+            message.error("Có lỗi xảy ra, vui lòng thử lại!");
+        }
+    };
+
+    // Submit update
+    const handleUpdateSubmit = async () => {
+        try {
+            const values = await form.validateFields();
+            console.log("Form values:", values);
+
+            const payload = {
+                LocationId: editingLocation?.locationId,
+                AreaId: Number(values.areaId),
+                LocationCode: values.locationCode,
+                Rack: values.rack,
+                Row: values.row,
+                Column: values.column,
+                IsAvailable: values.isAvailable,
+                Status: Number(values.status),
+            };
+
+            console.log("Sending update request:", payload);
+
+                await updateLocation(payload);
+                window.showToast(
+                    `Đã cập nhật vị trí: ${payload.LocationCode || ''}`,
+                    "success"
+                );
+
+            setShowUpdateModal(false);
+            fetchLocations(pagination.current, pagination.pageSize, {
+                search: searchQuery,
+                filters: { 
+                    isAvailable: statusFilter ? statusFilter === "true" : undefined,
+                    status: statusTypeFilter ? Number(statusTypeFilter) : undefined
+                }
+            });
+        } catch (error) {
+            console.error("Error updating location:", error);
             const errorMsg =
                 error?.response?.data?.message?.replace(/^\[.*?\]\s*/, "") ||
                 error?.message ||
@@ -399,21 +453,11 @@ const LocationList = () => {
                 </div>
 
                 {/* Search Bar */}
-                <Card>
-                    <CardContent className="pt-6">
-                        <AntInput
-                            placeholder="Tìm kiếm theo tên hoặc mô tả danh mục..."
+                <SearchBar
+                            placeholder="Tìm kiếm theo mã vị trí..."
                             value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="h-12 text-base"
-                            prefix={<Search className="h-5 w-5 text-slate-400" />}
-                            style={{
-                                borderColor: 'rgba(26, 52, 59, 0.2)',
-                                backgroundColor: 'rgba(189, 193, 194, 0.2)'
-                            }}
-                        />
-                    </CardContent>
-                </Card>
+                    onChange={handleSearchInputChange}
+                />
 
                 {/* Locations Table */}
                 <Card style={{ boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)", overflow: "hidden", padding: 0 }}>
@@ -468,99 +512,37 @@ const LocationList = () => {
                                             <TableHead style={{ fontWeight: "600", color: "white", padding: "12px 16px", border: 0, width: "160px" }}>
                                                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
                                                     <span>Tình trạng</span>
-                                                    <div style={{ position: "relative" }} className="status-filter-dropdown">
-                                                        <button
-                                                            onClick={() => setShowStatusFilter(!showStatusFilter)}
-                                                            style={{
-                                                                padding: "4px",
-                                                                borderRadius: "4px",
-                                                                border: "none",
-                                                                background: statusFilter ? "rgba(255,255,255,0.3)" : "transparent",
-                                                                cursor: "pointer",
-                                                                color: "white"
-                                                            }}
+                                                    <FilterDropdown
+                                                        type="status"
+                                                        value={statusFilter}
+                                                        onFilterChange={handleStatusFilter}
+                                                        onClearFilter={clearStatusFilter}
+                                                        options={[
+                                                            { value: "true", label: "Trống" },
+                                                            { value: "false", label: "Đang sử dụng" }
+                                                        ]}
+                                                        placeholder="Tất cả"
+                                                        className="status-filter-dropdown"
                                                             title="Lọc theo tình trạng"
-                                                        >
-                                                            <Filter style={{ height: "16px", width: "16px" }} />
-                                                        </button>
-
-                                                        {showStatusFilter && (
-                                                            <div style={{ position: "absolute", top: "100%", right: 0, marginTop: "4px", width: "192px", backgroundColor: "white", borderRadius: "6px", boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)", border: "1px solid #e2e8f0", zIndex: 10 }}>
-                                                                <div style={{ padding: "4px 0" }}>
-                                                                    <button
-                                                                        onClick={clearStatusFilter}
-                                                                        style={{ width: "100%", textAlign: "left", padding: "8px 16px", fontSize: "14px", color: "#374151", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between" }}
-                                                                    >
-                                                                        Tất cả
-                                                                        {!statusFilter && <span style={{ color: "#237486" }}>✓</span>}
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => handleStatusFilter("true")}
-                                                                        style={{ width: "100%", textAlign: "left", padding: "8px 16px", fontSize: "14px", color: "#374151", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between" }}
-                                                                    >
-                                                                        Trống
-                                                                        {statusFilter === "true" && <span style={{ color: "#237486" }}>✓</span>}
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => handleStatusFilter("false")}
-                                                                        style={{ width: "100%", textAlign: "left", padding: "8px 16px", fontSize: "14px", color: "#374151", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between" }}
-                                                                    >
-                                                                        Đang sử dụng
-                                                                        {statusFilter === "false" && <span style={{ color: "#237486" }}>✓</span>}
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                    </div>
+                                                    />
                                                 </div>
                                             </TableHead>
                                             <TableHead style={{ fontWeight: "600", color: "white", padding: "12px 16px", border: 0, width: "160px" }}>
                                                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
                                                     <span>Trạng thái</span>
-                                                    <div style={{ position: "relative" }} className="status-type-filter-dropdown">
-                                                        <button
-                                                            onClick={() => setShowStatusTypeFilter(!showStatusTypeFilter)}
-                                                            style={{
-                                                                padding: "4px",
-                                                                borderRadius: "4px",
-                                                                border: "none",
-                                                                background: statusTypeFilter ? "rgba(255,255,255,0.3)" : "transparent",
-                                                                cursor: "pointer",
-                                                                color: "white"
-                                                            }}
+                                                    <FilterDropdown
+                                                        type="statusType"
+                                                        value={statusTypeFilter}
+                                                        onFilterChange={handleStatusTypeFilter}
+                                                        onClearFilter={clearStatusTypeFilter}
+                                                        options={[
+                                                            { value: "1", label: "Hoạt động" },
+                                                            { value: "2", label: "Ngừng hoạt động" }
+                                                        ]}
+                                                        placeholder="Tất cả"
+                                                        className="status-type-filter-dropdown"
                                                             title="Lọc theo trạng thái"
-                                                        >
-                                                            <Filter style={{ height: "16px", width: "16px" }} />
-                                                        </button>
-
-                                                        {showStatusTypeFilter && (
-                                                            <div style={{ position: "absolute", top: "100%", right: 0, marginTop: "4px", width: "192px", backgroundColor: "white", borderRadius: "6px", boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)", border: "1px solid #e2e8f0", zIndex: 10 }}>
-                                                                <div style={{ padding: "4px 0" }}>
-                                                                    <button
-                                                                        onClick={clearStatusTypeFilter}
-                                                                        style={{ width: "100%", textAlign: "left", padding: "8px 16px", fontSize: "14px", color: "#374151", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between" }}
-                                                                    >
-                                                                        Tất cả
-                                                                        {!statusTypeFilter && <span style={{ color: "#237486" }}>✓</span>}
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => handleStatusTypeFilter("1")}
-                                                                        style={{ width: "100%", textAlign: "left", padding: "8px 16px", fontSize: "14px", color: "#374151", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between" }}
-                                                                    >
-                                                                        Hoạt động
-                                                                        {statusTypeFilter === "1" && <span style={{ color: "#237486" }}>✓</span>}
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => handleStatusTypeFilter("2")}
-                                                                        style={{ width: "100%", textAlign: "left", padding: "8px 16px", fontSize: "14px", color: "#374151", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between" }}
-                                                                    >
-                                                                        Ngừng hoạt động
-                                                                        {statusTypeFilter === "2" && <span style={{ color: "#237486" }}>✓</span>}
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                    </div>
+                                                    />
                                                 </div>
                                             </TableHead>
                                             <TableHead style={{ fontWeight: "600", color: "white", padding: "12px 16px", border: 0, textAlign: "center" }}>
@@ -659,265 +641,38 @@ const LocationList = () => {
                 </Card>
 
                 {/* Pagination */}
-                {!loading && pagination.total > 0 && (
-                    <Card>
-                        <CardContent style={{ paddingTop: "24px" }}>
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                                <div style={{ fontSize: "14px", color: "#64748b" }}>
-                                    Hiển thị {((pagination.current - 1) * pagination.pageSize) + 1} - {Math.min(pagination.current * pagination.pageSize, pagination.total)} trong tổng số {pagination.total} vị trí
-                                </div>
-
-                                <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                        <Button
-                                            style={{ border: "none", background: "white" }}
-                                            size="small"
-                                            onClick={() => {
-                                                if (pagination.current > 1) {
-                                                    fetchLocations(pagination.current - 1, pagination.pageSize, {
-                                                        search: searchQuery,
-                                                        filters: { isAvailable: statusFilter ? statusFilter === "true" : undefined }
-                                                    });
-                                                    setPagination(prev => ({ ...prev, current: prev.current - 1 }));
-                                                }
-                                            }}
-                                            disabled={pagination.current <= 1}
-                                        >
-                                            Trước
-                                        </Button>
-                                        <span style={{ fontSize: "14px", color: "#64748b" }}>
-                                            Trang {pagination.current} / {Math.ceil(pagination.total / pagination.pageSize)}
-                                        </span>
-                                        <Button
-                                            style={{ border: "none", background: "white" }}
-                                            size="small"
-                                            onClick={() => {
-                                                if (pagination.current < Math.ceil(pagination.total / pagination.pageSize)) {
-                                                    fetchLocations(pagination.current + 1, pagination.pageSize, {
-                                                        search: searchQuery,
-                                                        filters: { isAvailable: statusFilter ? statusFilter === "true" : undefined }
-                                                    });
-                                                    setPagination(prev => ({ ...prev, current: prev.current + 1 }));
-                                                }
-                                            }}
-                                            disabled={pagination.current >= Math.ceil(pagination.total / pagination.pageSize)}
-                                        >
-                                            Sau
-                                        </Button>
-                                    </div>
-
-                                    {/* Page Size Selector */}
-                                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                        <span style={{ fontSize: "14px", color: "#64748b" }}>Hiển thị:</span>
-                                        <div style={{ position: "relative" }} className="page-size-filter-dropdown">
-                                            <button
-                                                onClick={() => setShowPageSizeFilter(!showPageSizeFilter)}
-                                                style={{
-                                                    display: "flex",
-                                                    alignItems: "center",
-                                                    gap: "8px",
-                                                    padding: "8px 12px",
-                                                    fontSize: "14px",
-                                                    border: "1px solid #d1d5db",
-                                                    borderRadius: "6px",
-                                                    background: "white",
-                                                    cursor: "pointer"
-                                                }}
-                                            >
-                                                <span>{pagination.pageSize}</span>
-                                                <ChevronDown style={{ height: "16px", width: "16px" }} />
-                                            </button>
-
-                                            {showPageSizeFilter && (
-                                                <div style={{ position: "absolute", bottom: "100%", right: 0, marginBottom: "4px", width: "80px", backgroundColor: "white", borderRadius: "6px", boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)", border: "1px solid #e2e8f0", zIndex: 10 }}>
-                                                    <div style={{ padding: "4px 0" }}>
-                                                        {[10, 20, 30, 40].map((size) => (
-                                                            <button
-                                                                key={size}
-                                                                onClick={() => handlePageSizeChange(size)}
-                                                                style={{
-                                                                    width: "100%",
-                                                                    textAlign: "left",
-                                                                    padding: "8px 12px",
-                                                                    fontSize: "14px",
-                                                                    background: pagination.pageSize === size ? "#237486" : "white",
-                                                                    color: pagination.pageSize === size ? "white" : "#374151",
-                                                                    border: "none",
-                                                                    cursor: "pointer",
-                                                                    display: "flex",
-                                                                    alignItems: "center",
-                                                                    justifyContent: "space-between"
-                                                                }}
-                                                            >
-                                                                {size}
-                                                                {pagination.pageSize === size && <span style={{ color: "white" }}>✓</span>}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <span style={{ fontSize: "14px", color: "#64748b" }}>/ Trang</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                {!loading && (
+                    <Pagination
+                        current={pagination.current}
+                        pageSize={pagination.pageSize}
+                        total={pagination.total}
+                        onPageChange={handlePageChange}
+                        onPageSizeChange={handlePageSizeChange}
+                        showPageSize={true}
+                        pageSizeOptions={[10, 20, 30, 40]}
+                    />
                 )}
             </div>
 
-            {/* Modal Create / Update */}
-            <Modal
-                title={
-                    <span style={{ fontWeight: 600, fontSize: 18 }}>
-                        {isEdit ? "Cập nhật vị trí lưu trữ" : "Thêm vị trí mới"}
-                    </span>
-                }
-                open={isModalVisible}
-                onCancel={() => setIsModalVisible(false)}
-                onOk={handleSubmit}
-                okText={isEdit ? "Cập nhật" : "Tạo mới"}
-                cancelText="Hủy"
-                centered
-                width={720}
-                okButtonProps={{
-                    style: {
-                        backgroundColor: "#237486",
-                        borderColor: "#237486",
-                    },
-                }}
-            >
-                <Divider orientation="left">Thông tin cơ bản</Divider>
-                <Form
+            {/* Create Location Modal */}
+            <CreateLocationModal
+                isVisible={showCreateModal}
+                onCancel={() => setShowCreateModal(false)}
+                onSubmit={handleCreateSubmit}
                     form={form}
-                    layout="vertical"
-                    size="middle"
-                    requiredMark={false}
-                    style={{ marginTop: 10 }}
-                >
-                    <Row gutter={16}>
-                        <Col span={12}>
-                            <Form.Item
-                                name="areaId"
-                                label="Khu vực"
-                                rules={[{ required: true, message: "Vui lòng chọn khu vực" }]}
-                            >
-                                <Select
-                                    placeholder="Chọn khu vực"
-                                    allowClear
-                                    showSearch
-                                    loading={!areas || areas.length === 0}
-                                >
-                                    {Array.isArray(areas) ? (
-                                        areas.map((area) => (
-                                            <Option key={area.areaId} value={area.areaId}>
-                                                {area.areaName || `Khu vực ${area.areaId}`}
-                                            </Option>
-                                        ))
-                                    ) : (
-                                        <Option disabled>Không thể tải danh sách khu vực</Option>
-                                    )}
-                                </Select>
-                            </Form.Item>
-                        </Col>
+                areas={areas}
+                loading={loading}
+            />
 
-                        <Col span={12}>
-                            <Form.Item
-                                name="locationCode"
-                                label="Mã vị trí"
-                                rules={[{ required: true, message: "Vui lòng nhập mã vị trí" }]}
-                            >
-                                <AntInput
-                                    placeholder="VD: A1-01"
-                                    maxLength={20}
-                                />
-                            </Form.Item>
-                        </Col>
-                    </Row>
-
-                    <Row gutter={16}>
-                        <Col span={12}>
-                            <Form.Item
-                                name="rack"
-                                label="Kệ"
-                                rules={[{ required: true, message: "Vui lòng nhập tên kệ" }]}
-                            >
-                                <AntInput
-                                    placeholder="VD: Kệ A1"
-                                    maxLength={50}
-                                />
-                            </Form.Item>
-                        </Col>
-
-                        <Col span={6}>
-                            <Form.Item
-                                name="row"
-                                label="Hàng (Row)"
-                                rules={[{ required: true, message: "Vui lòng nhập hàng" }]}
-                            >
-                                <InputNumber
-                                    min={1}
-                                    style={{ width: "100%" }}
-                                    placeholder="VD: 1"
-                                />
-                            </Form.Item>
-                        </Col>
-
-                        <Col span={6}>
-                            <Form.Item
-                                name="column"
-                                label="Cột (Column)"
-                                rules={[{ required: true, message: "Vui lòng nhập cột" }]}
-                            >
-                                <InputNumber
-                                    min={1}
-                                    style={{ width: "100%" }}
-                                    placeholder="VD: 3"
-                                />
-                            </Form.Item>
-                        </Col>
-                    </Row>
-
-                    <Divider orientation="left">Trạng thái vị trí</Divider>
-
-                    <Row gutter={16}>
-                        {isEdit && (
-                            <Col span={12}>
-                                <Form.Item
-                                    name="status"
-                                    label="Trạng thái hoạt động"
-                                    rules={[{ required: true, message: "Vui lòng chọn trạng thái" }]}
-                                >
-                                    <Select
-                                        placeholder="Chọn trạng thái"
-                                        suffixIcon={<ThunderboltOutlined />}
-                                    >
-                                        <Option value={1}>Hoạt động</Option>
-                                        <Option value={2}>Không hoạt động</Option>
-                                        <Option value={3}>Đã xóa</Option>
-                                    </Select>
-                                </Form.Item>
-                            </Col>
-                        )}
-
-                        <Col span={isEdit ? 12 : 24}>
-                            <Form.Item
-                                name="isAvailable"
-                                label="Tình trạng sử dụng"
-                                rules={[{ required: true, message: "Vui lòng chọn tình trạng" }]}
-                            >
-                                <Select
-                                    placeholder="Chọn tình trạng"
-                                    suffixIcon={<CheckCircleOutlined />}
-                                >
-                                    <Option value={true}>Trống</Option>
-                                    <Option value={false}>Đang sử dụng</Option>
-                                </Select>
-                            </Form.Item>
-                        </Col>
-                    </Row>
-                </Form>
-            </Modal>
+            {/* Update Location Modal */}
+            <UpdateLocationModal
+                isVisible={showUpdateModal}
+                onCancel={() => setShowUpdateModal(false)}
+                onSubmit={handleUpdateSubmit}
+                form={form}
+                areas={areas}
+                loading={loading}
+            />
 
             {/* Delete Confirmation Modal */}
             <DeleteModal
