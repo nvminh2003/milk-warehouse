@@ -3,8 +3,8 @@ import { Table, Button, Space, Tag, Modal, Form, message, Divider, Row, Col, Pag
 import { CheckCircleOutlined, PlusOutlined, ThunderboltOutlined } from "@ant-design/icons";
 import { getAreas, createArea, updateArea, deleteArea } from "../../../services/AreaServices";
 import { Edit, Trash2 } from "lucide-react";
-import DeleteModal from "../../../components/DeleteModal";
-import BaseFilter from "../../../components/BaseFilter";
+import DeleteModal from "../../../components/Common/DeleteModal";
+import BaseFilter from "../../../components/Common/BaseFilter";
 
 const { Option } = Select;
 

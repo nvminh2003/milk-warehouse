@@ -123,43 +123,42 @@ export const routes = [
     {
         path: "/sales-manager/categorys",
         page: () => (
-            page: () => (
-                <Layout>
+            <Layout>
                 <CategoryList />
             </Layout >
         ),
     },
-{
-    path: "/sales-manager/unitMeasures",
+    {
+        path: "/sales-manager/unitMeasures",
         page: () => (
             <Layout>
                 <UnitMeasureList />
             </Layout>
         ),
     },
-{
-    path: "/sales-manager/goods",
+    {
+        path: "/sales-manager/goods",
         page: () => (
             <Layout>
                 <GoodsList />
             </Layout>
         ),
     },
-{
-    path: "/sales-manager/suppliers",
+    {
+        path: "/sales-manager/suppliers",
         page: () => (
             <Layout>
                 <SupplierList />
             </Layout>
         ),
     },
-{
-    path: "/sales-manager/retailers",
+    {
+        path: "/sales-manager/retailers",
         page: () => (
             <Layout>
                 <RetailerList />
             </Layout>
         ),
     },
-{ path: "*", page: NotFoundPage },
+    { path: "*", page: NotFoundPage },
 ];

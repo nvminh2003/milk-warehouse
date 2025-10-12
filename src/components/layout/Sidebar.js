@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { Menu, Avatar } from "antd";
 import {
     DashboardOutlined,
@@ -10,7 +10,6 @@ import {
     UsergroupAddOutlined,
     ClusterOutlined,
     AppstoreOutlined,
-    ContainerOutlined,
 } from "@ant-design/icons";
 import { Link, useLocation } from "react-router-dom";
 import { ComponentIcon } from "../../components/IconComponent/Icon";
@@ -26,31 +25,23 @@ const Sidebar = ({ collapsed, isMobile }) => {
 
     const role = user?.roles?.[0] || "Guest";
 
+    // màu trắng cho mũi tên dropdown
     const arrowWhiteStyle = `
         .ant-menu-submenu-arrow {
             color: white !important;
         }
     `;
 
-    /** --- TOÀN BỘ MENU GỐC --- */
-    const allMenuItems = [
-        {
-            key: "/admin/dashboard",
-            icon: <DashboardOutlined />,
-            label: "Dashboard",
-            roles: ["Warehouse Manager", "Employee"],
-        },
+    const menuItems = [
         {
             key: "/admin/accounts",
             icon: <UsergroupAddOutlined />,
             label: "Quản lý tài khoản",
-            roles: ["Warehouse Manager"], // chỉ manager mới thấy
         },
         {
             key: "/sales-manager/categorys",
             icon: <ComponentIcon name="category" size={15} collapsed={collapsed} />,
             label: "Quản lý danh mục",
-            roles: ["Warehouse Manager"],
         },
         {
             key: "/sales-manager/unitMeasures",
@@ -78,14 +69,11 @@ const Sidebar = ({ collapsed, isMobile }) => {
                     label: "Quản lý nhà bán lẻ",
                 },
             ],
-            label: "Quản lý sản phẩm",
-            roles: ["Warehouse Manager", "Employee"],
         },
         {
             key: "location-management",
             icon: <EnvironmentOutlined />,
             label: "Quản lý vị trí và khu vực",
-            roles: ["Warehouse Manager"],
             children: [
                 {
                     key: "/admin/areas",
@@ -105,71 +93,29 @@ const Sidebar = ({ collapsed, isMobile }) => {
             ],
         },
         {
-            key: "/admin/batch",
-            icon: <ContainerOutlined />,
-            label: "Quản lý lô hàng",
-            roles: ["Warehouse Manager", "Employee"],
-        },
-        {
-            key: "/admin/products",
-            icon: <ShoppingOutlined />,
-            label: "Sản phẩm",
-            roles: ["Warehouse Manager", "Employee"],
-        },
-        {
-            key: "/admin/orders",
-            icon: <ShoppingCartOutlined />,
-            label: "Đơn hàng",
-            roles: ["Warehouse Manager", "Employee"],
+            key: "/admin/dashboard",
+            icon: <DashboardOutlined />,
+            label: "Dashboard",
         },
         {
             key: "/admin/reports",
             icon: <BarChartOutlined />,
             label: "Báo cáo",
-            roles: ["Warehouse Manager"],
         },
         {
             key: "/admin/settings",
             icon: <SettingOutlined />,
             label: "Cài đặt",
-            roles: ["Warehouse Manager"],
         },
     ];
 
-    /** --- LỌC MENU THEO ROLE --- */
-    const menuItems = useMemo(() => {
-        return allMenuItems
-            .filter((item) => item.roles?.includes(role))
-            .map((item) => {
-                if (item.children) {
-                    return {
-                        ...item,
-                        children: item.children.map((sub) => ({
-                            ...sub,
-                            label: collapsed ? null : (
-                                <Link
-                                    to={sub.key}
-                                    style={{
-                                        color:
-                                            location.pathname === sub.key
-                                                ? "black"
-                                                : "white",
-                                    }}
-                                >
-                                    {sub.label}
-                                </Link>
-                            ),
-                        })),
-                    };
-                }
-                return item;
-            });
-    }, [role, collapsed, location.pathname]);
-
+    // Hàm render icon có màu động (đen nếu được chọn)
     const renderIcon = (icon, active) => {
+        // nếu là ComponentIcon custom
         if (icon?.type?.name === "ComponentIcon") {
             return React.cloneElement(icon, { color: active ? "black" : "white" });
         }
+        // nếu là icon Ant Design
         return React.cloneElement(icon, {
             style: { color: active ? "black" : "white" },
         });
@@ -184,6 +130,7 @@ const Sidebar = ({ collapsed, isMobile }) => {
     return (
         <>
             <style>{arrowWhiteStyle}</style>
+
             <aside
                 className={collapsed ? "" : "sidebar-container"}
                 style={{
@@ -202,7 +149,7 @@ const Sidebar = ({ collapsed, isMobile }) => {
                     boxShadow: isMobile ? "2px 0 8px rgba(0,0,0,0.15)" : "none",
                 }}
             >
-                {/* Header user */}
+                {/* Thông tin user */}
                 <div
                     style={{
                         padding: collapsed ? "20px 12px" : "20px 16px",
@@ -240,21 +187,40 @@ const Sidebar = ({ collapsed, isMobile }) => {
                         mode="inline"
                         selectedKeys={[location.pathname]}
                         items={menuItems.map((item) => {
+                            // Kiểm tra active cho item
                             const isActive =
                                 location.pathname === item.key ||
                                 item.children?.some((c) => c.key === location.pathname);
 
+                            // Nếu là submenu cha
                             if (item.children) {
                                 return {
                                     ...item,
                                     icon: renderIcon(item.icon, isActive),
-                                    label: collapsed ? null : (
-                                        <span style={{ color: "white" }}>{item.label}</span>
-                                    ),
-                                    children: item.children,
+                                    label: collapsed ? null : <span style={{ color: "white" }}>{item.label}</span>,
+                                    children: item.children.map((sub) => ({
+                                        ...sub,
+                                        icon: sub.icon
+                                            ? renderIcon(sub.icon, location.pathname === sub.key)
+                                            : null,
+                                        label: collapsed ? null : (
+                                            <Link
+                                                to={sub.key}
+                                                style={{
+                                                    color:
+                                                        location.pathname === sub.key
+                                                            ? "black"
+                                                            : "white",
+                                                }}
+                                            >
+                                                {sub.label}
+                                            </Link>
+                                        ),
+                                    })),
                                 };
                             }
 
+                            // Nếu là menu con bình thường
                             return {
                                 ...item,
                                 icon: renderIcon(item.icon, isActive),

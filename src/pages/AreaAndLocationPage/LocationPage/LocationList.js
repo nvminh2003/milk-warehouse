@@ -4,8 +4,8 @@ import { CheckCircleOutlined, PlusOutlined, ThunderboltOutlined } from "@ant-des
 import { getLocations, createLocation, updateLocation, deleteLocation } from "../../../services/LocationServices";
 import { getAreas } from "../../../services/AreaServices";
 import { Edit, Trash2 } from "lucide-react";
-import DeleteModal from "../../../components/DeleteModal";
-import BaseFilter from "../../../components/BaseFilter";
+import DeleteModal from "../../../components/Common/DeleteModal";
+import BaseFilter from "../../../components/Common/BaseFilter";
 
 const { Option } = Select;
 
