@@ -7,12 +7,10 @@ const ToastManager = () => {
   const addToast = useCallback((message, type = 'success', duration = 3000) => {
     const id = Date.now() + Math.random()
     const newToast = { id, message, type, duration }
-    
     setToasts(prevToasts => [...prevToasts, newToast])
     
     return id
   }, [])
-
   const removeToast = useCallback((id) => {
     setToasts(prevToasts => prevToasts.filter(toast => toast.id !== id))
   }, [])

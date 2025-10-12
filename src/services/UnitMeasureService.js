@@ -1,6 +1,6 @@
-import api from "../api";
+import api from "./api";
 
-export const getCategory = async (searchParams = {}) => {
+export const getUnitMeasure = async (searchParams = {}) => {
     try {
         const body = {
             pageNumber: searchParams.pageNumber || 1,
@@ -10,68 +10,66 @@ export const getCategory = async (searchParams = {}) => {
             sortAscending: searchParams.sortAscending !== undefined ? searchParams.sortAscending : true,
             filters: searchParams.status ? { status: searchParams.status } : {}
         };
-
-
-        const res = await api.post("/Category/Categories", body);
-        console.log("Category API response:", res.data);
+        const res = await api.post("UnitMeasure/UnitMeasures", body);
+        console.log("UnitMeasure API response:", res.data);
         console.log("Search params received:", searchParams);
 
         return res.data;
     } catch (error) {
-        console.error("Error fetching categories:", error);
+        console.error("Error fetching UnitMeasure:", error);
         return { data: [], totalCount: 0 };
     }
 };
 
 
-export const createCategory = async (data) => {
+export const createUnitMeasure = async (data) => {
     try {
         const body = {
-            categoryName: data.categoryName,
+            name: data.name,
             description: data.description
         };
-        const res = await api.post("/Category/Create", body);
-        console.log("Category API response:", res.data);
+        const res = await api.post("/UnitMeasure/Create", body);
+        console.log("UnitMeasure API response:", res.data);
         return res.data;
     } catch (error) {
-        console.error("Error creating category:", error);
+        console.error("Error creating unit measure:", error);
         throw error;
     }
 };
 
-export const deleteCategory = async (categoryId) => {
+export const deleteUnitMeasure = async (unitMeasureId) => {
     try {
-        const res = await api.delete(`/Category/Delete/${categoryId}`);
-        console.log("Category delete API response:", res.data);
+        const res = await api.delete(`/UnitMeasure/Delete/${unitMeasureId}`);
+        console.log("UnitMeasure delete API response:", res.data);
         return res.data;
     } catch (error) {
-        console.error("Error deleting category:", error);
+        console.error("Error deleting unit measure:", error);
         throw error;
     }
 };
 
-export const updateCategory = async (data) => {
+export const updateUnitMeasure = async (data) => {
     const body = {
-        categoryName: data.categoryName,
+        name: data.name,
         description: data.description,
-        categoryId: data.categoryId,
+        unitMeasureId: data.unitMeasureId,
         status: data.status
     };
 
     try {
         console.log("Sending update request:", body);
         console.log("Data types:", {
-            categoryName: typeof body.categoryName,
+            name: typeof body.name,
             description: typeof body.description,
-            categoryId: typeof body.categoryId,
+            unitMeasureId: typeof body.unitMeasureId,
             status: typeof body.status
         });
 
-        const res = await api.put("/Category/Update", body);
-        console.log("Category update API response:", res.data);
+        const res = await api.put("/UnitMeasure/Update", body);
+        console.log("UnitMeasure update API response:", res.data);
         return res.data;
     } catch (error) {
-        console.error("Error updating category:", error);
+        console.error("Error updating unit measure:", error);
         console.error("Request body was:", body);
         if (error.response) {
             console.error("Error response data:", error.response.data);

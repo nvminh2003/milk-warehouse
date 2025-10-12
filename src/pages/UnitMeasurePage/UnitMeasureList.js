@@ -1,46 +1,36 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { getGoods, deleteGood, getGoodDetail } from "../../services/GoodService";
+import { getUnitMeasure, deleteUnitMeasure, createUnitMeasure, updateUnitMeasure } from "../../services/UnitMeasureService";
 import { Card, CardContent } from "../../components/ui/card";
 import { Input } from "../../components/ui/input";
 import { Button } from "../../components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
-import { Search, Plus, Edit, Trash2, Filter, ChevronDown, Eye } from "lucide-react";
-import CreateGood from "./CreateGoodModal";
-import UpdateGoodModal from "./UpdateGoodModal";
+import { Search, Plus, Edit, Trash2, Filter, ChevronDown } from "lucide-react";
+import CreateUnitMeasure from "./CreateUnitMeasureModal";
+import UpdateUnitMeasure from "./UpdateUnitMeasureModal";
 import DeleteModal from "../../components/Common/DeleteModal";
-import { ProductDetail } from "./ViewGoodModal";
 
-// Type definition for Good
-const Good = {
-  goodsId: "",
-  goodsCode: "",
-  goodsName: "",
-  categoryId: "",
-  supplierId: "",
-  storageConditionId: "",
-  unitMeasureId: "",
+// Type definition for UnitMeasure
+const UnitMeasure = {
+  name: "",
+  description: "",
   status: null,
+  createdAt: "",
 };
 
 
-export default function GoodsPage() {
+export default function UnitMeasuresPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("")
   const [showStatusFilter, setShowStatusFilter] = useState(false)
   const [sortField, setSortField] = useState("")
   const [sortAscending, setSortAscending] = useState(true)
-  const [goods, setGoods] = useState([])
+  const [unitMeasures, setUnitMeasures] = useState([])
   const [loading, setLoading] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showUpdateModal, setShowUpdateModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [showViewModal, setShowViewModal] = useState(false)
   const [itemToDelete, setItemToDelete] = useState(null)
   const [itemToUpdate, setItemToUpdate] = useState(null)
-  const [updateGoodId, setUpdateGoodId] = useState(null)
-  const [itemToView, setItemToView] = useState(null)
-  const [goodDetail, setGoodDetail] = useState(null)
-  const [loadingDetail, setLoadingDetail] = useState(false)
   const [pagination, setPagination] = useState({
     pageNumber: 1,
     pageSize: 10,
@@ -52,8 +42,7 @@ export default function GoodsPage() {
   const fetchData = async (searchParams = {}) => {
     try {
       setLoading(true)
-
-      const response = await getGoods({
+      const response = await getUnitMeasure({
         pageNumber: searchParams.pageNumber !== undefined ? searchParams.pageNumber : 1,
         pageSize: searchParams.pageSize !== undefined ? searchParams.pageSize : 10,
         search: searchParams.search !== undefined ? searchParams.search : "",
@@ -62,21 +51,44 @@ export default function GoodsPage() {
         status: searchParams.status
       })
 
+      console.log("Full response from getUnitMeasure:", response);
+      console.log("Response.data:", response?.data);
+
       if (response && response.data) {
-        // API returns response.data.items (array) and response.data.totalCount
-        const dataArray = Array.isArray(response.data.items) ? response.data.items : []
-        setGoods(dataArray)
+        // Check different possible response structures
+        let dataArray = [];
+        let totalCount = 0;
+
+        if (Array.isArray(response.data.items)) {
+          // Structure: { data: { items: [...], totalCount: number } }
+          dataArray = response.data.items;
+          totalCount = response.data.totalCount || dataArray.length;
+        } else if (Array.isArray(response.data)) {
+          // Structure: { data: [...] }
+          dataArray = response.data;
+          totalCount = dataArray.length;
+        } else if (response.data.data && Array.isArray(response.data.data)) {
+          // Structure: { data: { data: [...], totalCount: number } }
+          dataArray = response.data.data;
+          totalCount = response.data.totalCount || dataArray.length;
+        }
+
+        console.log("Parsed dataArray:", dataArray);
+        console.log("Parsed totalCount:", totalCount);
+
+        setUnitMeasures(dataArray)
         setPagination(prev => ({
           ...prev,
-          totalCount: response.data.totalCount || dataArray.length
+          totalCount: totalCount
         }))
       } else {
-        setGoods([])
+        console.log("No response or response.data");
+        setUnitMeasures([])
         setPagination(prev => ({ ...prev, totalCount: 0 }))
       }
     } catch (error) {
-      console.error("Error fetching goods:", error)
-      setGoods([])
+      console.error("Error fetching unit measures:", error)
+      setUnitMeasures([])
       setPagination(prev => ({ ...prev, totalCount: 0 }))
     } finally {
       setLoading(false)
@@ -156,78 +168,50 @@ export default function GoodsPage() {
   }, [sortField, sortAscending])
 
   // Remove client-side filtering since backend already handles search and filter
-  const filteredGoods = useMemo(() => {
-    // Just return the goods from API as they are already filtered
-    return Array.isArray(goods) ? goods : []
-  }, [goods])
+  const filteredUnitMeasures = useMemo(() => {
+    // Just return the unit measures from API as they are already filtered
+    return Array.isArray(unitMeasures) ? unitMeasures : []
+  }, [unitMeasures])
 
-  const activeCount = Array.isArray(goods) ? goods.filter((g) => g.status === 1).length : 0
-  const inactiveCount = Array.isArray(goods) ? goods.filter((g) => g.status === 2).length : 0
+  const activeCount = Array.isArray(unitMeasures) ? unitMeasures.filter((c) => c.status === 1).length : 0
+  const inactiveCount = Array.isArray(unitMeasures) ? unitMeasures.filter((c) => c.status === 2).length : 0
 
   const handleCreateSuccess = () => {
-    // Add small delay to ensure API has processed the new record
-    setTimeout(() => {
-      // Refresh data after successful creation
-      fetchData({
-        pageNumber: 1,
-        pageSize: pagination.pageSize,
-        search: searchQuery || "",
-        sortField: sortField,
-        sortAscending: sortAscending,
-        status: statusFilter
-      })
-    }, 500)
+    // Set sort to name descending to show new record at top
+    setSortField("Name")
+    setSortAscending(false)
+
+    // Refresh data after successful creation with new sort
+    fetchData({
+      pageNumber: 1,
+      pageSize: pagination.pageSize,
+      search: searchQuery || "",
+      sortField: "Name",
+      sortAscending: false,
+      status: statusFilter
+    })
   }
 
-  const handleViewClick = async (good) => {
-    try {
-      console.log("Viewing good:", good)
-      setItemToView(good)
-      setLoadingDetail(true)
-      setShowViewModal(true)
-
-      const response = await getGoodDetail(good.goodsId)
-      console.log("API Response:", response)
-
-      // Handle API response structure: { status: 200, message: "Success", data: {...} }
-      if (response && response.status === 200 && response.data) {
-        setGoodDetail(response.data)
-        console.log("Good detail set:", response.data)
-      } else {
-        console.log("Invalid response structure:", response)
-        window.showToast("Không thể tải chi tiết hàng hóa", "error")
-        setShowViewModal(false)
-      }
-    } catch (error) {
-      console.error("Error fetching good detail:", error)
-      window.showToast("Có lỗi xảy ra khi tải chi tiết hàng hóa", "error")
-      setShowViewModal(false)
-    } finally {
-      setLoadingDetail(false)
-    }
-  }
-
-  const handleUpdateClick = (good) => {
-    setItemToUpdate(good)
-    setUpdateGoodId(good.goodsId)
+  const handleUpdateClick = (unitMeasure) => {
+    setItemToUpdate(unitMeasure)
     setShowUpdateModal(true)
   }
 
-  const handleDeleteClick = (good) => {
-    setItemToDelete(good)
+  const handleDeleteClick = (unitMeasure) => {
+    setItemToDelete(unitMeasure)
     setShowDeleteModal(true)
   }
 
   const handleDeleteConfirm = async () => {
     try {
-      console.log("Deleting good:", itemToDelete)
-      await deleteGood(itemToDelete?.goodsId)
-      window.showToast(`Đã xóa hàng hóa: ${itemToDelete?.goodsName || ''}`, "success")
+      console.log("Deleting unit measure:", itemToDelete)
+      await deleteUnitMeasure(itemToDelete?.unitMeasureId)
+      window.showToast(`Đã xóa đơn vị đo: ${itemToDelete?.name || ''}`, "success")
       setShowDeleteModal(false)
       setItemToDelete(null)
 
       // Calculate if current page will be empty after deletion
-      const currentPageItemCount = goods.length
+      const currentPageItemCount = unitMeasures.length
       const willPageBeEmpty = currentPageItemCount <= 1
 
       // If current page will be empty and we're not on page 1, go to previous page
@@ -247,13 +231,13 @@ export default function GoodsPage() {
         status: statusFilter
       })
     } catch (error) {
-      console.error("Error deleting good:", error)
+      console.error("Error deleting unit measure:", error)
 
       // Show specific error message from API
       if (error.response && error.response.data && error.response.data.message) {
         window.showToast(`Lỗi: ${error.response.data.message}`, "error")
       } else {
-        window.showToast("Có lỗi xảy ra khi xóa hàng hóa", "error")
+        window.showToast("Có lỗi xảy ra khi xóa đơn vị đo", "error")
       }
     }
   }
@@ -261,33 +245,11 @@ export default function GoodsPage() {
   const handleUpdateCancel = () => {
     setShowUpdateModal(false)
     setItemToUpdate(null)
-    setUpdateGoodId(null)
-  }
-
-  const handleUpdateSuccess = () => {
-    // Refresh data after successful update
-    fetchData({
-      pageNumber: pagination.pageNumber,
-      pageSize: pagination.pageSize,
-      search: searchQuery || "",
-      sortField: sortField,
-      sortAscending: sortAscending,
-      status: statusFilter
-    })
-    setShowUpdateModal(false)
-    setItemToUpdate(null)
-    setUpdateGoodId(null)
   }
 
   const handleDeleteCancel = () => {
     setShowDeleteModal(false)
     setItemToDelete(null)
-  }
-
-  const handleViewClose = () => {
-    setShowViewModal(false)
-    setItemToView(null)
-    setGoodDetail(null)
   }
 
   const handleStatusFilter = (status) => {
@@ -332,15 +294,15 @@ export default function GoodsPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Quản lý Hàng hóa</h1>
-            <p className="text-slate-600 mt-1">Quản lý các hàng hóa sản phẩm trong hệ thống</p>
+            <h1 className="text-3xl font-bold text-slate-900">Quản lý Đơn vị đo</h1>
+            <p className="text-slate-600 mt-1">Quản lý các đơn vị đo sản phẩm trong hệ thống</p>
           </div>
           <Button
             className="bg-[#237486] hover:bg-[#1e5f6b] h-11 px-6 text-white"
             onClick={() => setShowCreateModal(true)}
           >
             <Plus className="mr-2 h-4 w-4" />
-            Thêm hàng hóa
+            Thêm đơn vị đo
           </Button>
         </div>
 
@@ -348,7 +310,7 @@ export default function GoodsPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="border-l-4 border-l-[#237486]">
             <CardContent className="pt-6">
-              <div className="text-sm font-medium text-slate-600">Tổng hàng hóa</div>
+              <div className="text-sm font-medium text-slate-600">Tổng đơn vị đo</div>
               <div className="text-3xl font-bold text-slate-900 mt-2">{pagination.totalCount}</div>
             </CardContent>
           </Card>
@@ -372,7 +334,7 @@ export default function GoodsPage() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
               <Input
-                placeholder="Tìm kiếm theo mã hoặc tên hàng hóa..."
+                placeholder="Tìm kiếm theo tên hoặc mô tả đơn vị đo..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 h-12 text-base"
@@ -381,7 +343,7 @@ export default function GoodsPage() {
           </CardContent>
         </Card>
 
-        {/* Goods Table */}
+        {/* Unit Measures Table */}
         <Card className="shadow-lg overflow-hidden p-0">
           <div className="w-full">
             {loading ? (
@@ -396,38 +358,29 @@ export default function GoodsPage() {
                       <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-20">
                         STT
                       </TableHead>
-                      <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-32">
-                        Mã hàng hóa
-                      </TableHead>
-                      <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-48">
-                        <div className="flex items-center space-x-2 cursor-pointer hover:bg-white/10 rounded p-1 -m-1" onClick={() => handleSort("goodsName")}>
-                          <span>Tên hàng hóa</span>
+                      <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-40">
+                        <div className="flex items-center space-x-2 cursor-pointer hover:bg-white/10 rounded p-1 -m-1" onClick={() => handleSort("name")}>
+                          <span>Tên đơn vị đo</span>
                           <div className="flex flex-col">
                             <ChevronDown
-                              className={`h-3 w-3 transition-colors ${sortField === "goodsName" && sortAscending
-                                  ? 'text-white'
-                                  : 'text-white/50'
+                              className={`h-3 w-3 transition-colors ${sortField === "name" && sortAscending
+                                ? 'text-white'
+                                : 'text-white/50'
                                 }`}
                               style={{ transform: 'translateY(1px)' }}
                             />
                             <ChevronDown
-                              className={`h-3 w-3 transition-colors ${sortField === "goodsName" && !sortAscending
-                                  ? 'text-white'
-                                  : 'text-white/50'
+                              className={`h-3 w-3 transition-colors ${sortField === "name" && !sortAscending
+                                ? 'text-white'
+                                : 'text-white/50'
                                 }`}
                               style={{ transform: 'translateY(-1px) rotate(180deg)' }}
                             />
                           </div>
                         </div>
                       </TableHead>
-                      <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-24">
-                        Danh mục
-                      </TableHead>
-                      <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-32">
-                        Nhà cung cấp
-                      </TableHead>
-                      <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-24">
-                        Đơn vị tính
+                      <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0">
+                        Mô tả
                       </TableHead>
                       <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-40">
                         <div className="flex items-center justify-center space-x-2">
@@ -472,14 +425,17 @@ export default function GoodsPage() {
                           </div>
                         </div>
                       </TableHead>
+                      <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-40">
+                        Ngày tạo
+                      </TableHead>
                       <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 text-center">
                         Hoạt động
                       </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredGoods.length > 0 ? (
-                      filteredGoods.map((good, index) => (
+                    {filteredUnitMeasures.length > 0 ? (
+                      filteredUnitMeasures.map((unitMeasure, index) => (
                         <TableRow
                           key={index}
                           className={`
@@ -490,39 +446,30 @@ export default function GoodsPage() {
                           <TableCell className="text-slate-600 px-4 py-3 first:pl-6 last:pr-6 border-0 w-20 text-center font-medium">
                             {index + 1}
                           </TableCell>
-                          <TableCell className="font-medium text-slate-900 px-4 py-3 first:pl-6 last:pr-6 border-0 w-32">{good?.goodsCode || ''}</TableCell>
-                          <TableCell className="text-slate-700 px-4 py-3 first:pl-6 last:pr-6 border-0 w-48">{good?.goodsName || ''}</TableCell>
-                          <TableCell className="text-slate-700 px-4 py-3 first:pl-6 last:pr-6 border-0 w-24 text-center">{good?.categoryName || ''}</TableCell>
-                          <TableCell className="text-slate-700 px-4 py-3 first:pl-6 last:pr-6 border-0 w-32 text-center">{good?.companyName || ''}</TableCell>
-                          <TableCell className="text-slate-700 px-4 py-3 first:pl-6 last:pr-6 border-0 w-24 text-center">{good?.unitMeasureName || ''}</TableCell>
+                          <TableCell className="font-medium text-slate-900 px-4 py-3 first:pl-6 last:pr-6 border-0 w-40">{unitMeasure?.name || ''}</TableCell>
+                          <TableCell className="text-slate-700 px-4 py-3 first:pl-6 last:pr-6 border-0">{unitMeasure?.description || ''}</TableCell>
                           <TableCell className="text-slate-700 px-4 py-3 first:pl-6 last:pr-6 border-0 w-40 text-center">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${good?.status === 1
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-red-100 text-red-800'
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${unitMeasure?.status === 1
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-red-100 text-red-800'
                               }`}>
-                              {good?.status === 1 ? 'Hoạt động' : 'Ngừng hoạt động'}
+                              {unitMeasure?.status === 1 ? 'Hoạt động' : 'Ngừng hoạt động'}
                             </span>
                           </TableCell>
+                          <TableCell className="text-slate-600 px-4 py-3 first:pl-6 last:pr-6 border-0 w-40">{unitMeasure?.createdAt || ''}</TableCell>
                           <TableCell className="text-slate-600 px-4 py-3 first:pl-6 last:pr-6 border-0 text-center">
                             <div className="flex items-center justify-center space-x-2">
                               <button
                                 className="p-1 hover:bg-slate-100 rounded transition-colors"
-                                title="Xem chi tiết"
-                                onClick={() => handleViewClick(good)}
-                              >
-                                <Eye className="h-4 w-4 text-[#1a7b7b]" />
-                              </button>
-                              <button
-                                className="p-1 hover:bg-slate-100 rounded transition-colors"
                                 title="Chỉnh sửa"
-                                onClick={() => handleUpdateClick(good)}
+                                onClick={() => handleUpdateClick(unitMeasure)}
                               >
                                 <Edit className="h-4 w-4 text-[#1a7b7b]" />
                               </button>
                               <button
                                 className="p-1 hover:bg-slate-100 rounded transition-colors"
                                 title="Xóa"
-                                onClick={() => handleDeleteClick(good)}
+                                onClick={() => handleDeleteClick(unitMeasure)}
                               >
                                 <Trash2 className="h-4 w-4 text-red-500" />
                               </button>
@@ -532,8 +479,8 @@ export default function GoodsPage() {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center py-12 text-slate-500">
-                          Không tìm thấy hàng hóa nào
+                        <TableCell colSpan={6} className="text-center py-12 text-slate-500">
+                          Không tìm thấy đơn vị đo nào
                         </TableCell>
                       </TableRow>
                     )}
@@ -550,7 +497,7 @@ export default function GoodsPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div className="text-sm text-slate-600">
-                  Hiển thị {((pagination.pageNumber - 1) * pagination.pageSize) + 1} - {Math.min(pagination.pageNumber * pagination.pageSize, pagination.totalCount)} trong tổng số {pagination.totalCount} hàng hóa
+                  Hiển thị {((pagination.pageNumber - 1) * pagination.pageSize) + 1} - {Math.min(pagination.pageNumber * pagination.pageSize, pagination.totalCount)} trong tổng số {pagination.totalCount} đơn vị đo
                 </div>
 
                 <div className="flex items-center space-x-4">
@@ -639,19 +586,19 @@ export default function GoodsPage() {
         )}
       </div>
 
-      {/* Create Good Modal */}
-      <CreateGood
+      {/* Create Unit Measure Modal */}
+      <CreateUnitMeasure
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onSuccess={handleCreateSuccess}
       />
 
-      {/* Update Good Modal */}
-      <UpdateGoodModal
+      {/* Update Unit Measure Modal */}
+      <UpdateUnitMeasure
         isOpen={showUpdateModal}
         onClose={handleUpdateCancel}
-        onSuccess={handleUpdateSuccess}
-        goodId={updateGoodId}
+        onSuccess={handleCreateSuccess}
+        unitMeasureData={itemToUpdate}
       />
 
       {/* Delete Confirmation Modal */}
@@ -659,30 +606,8 @@ export default function GoodsPage() {
         isOpen={showDeleteModal}
         onClose={handleDeleteCancel}
         onConfirm={handleDeleteConfirm}
-        itemName={itemToDelete?.goodsName || ""}
+        itemName={itemToDelete?.name || ""}
       />
-
-      {/* View Good Detail Modal */}
-      {showViewModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            {loadingDetail ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="text-slate-600">Đang tải chi tiết hàng hóa...</div>
-              </div>
-            ) : goodDetail ? (
-              <ProductDetail
-                product={goodDetail}
-                onClose={handleViewClose}
-              />
-            ) : (
-              <div className="flex items-center justify-center py-12">
-                <div className="text-slate-600">Không có dữ liệu để hiển thị</div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   )
 }

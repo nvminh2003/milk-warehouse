@@ -1,35 +1,33 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { getGoods, deleteGood, getGoodDetail } from "../../services/GoodService";
-import { Card, CardContent } from "../../components/ui/card";
-import { Input } from "../../components/ui/input";
-import { Button } from "../../components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
+import { getRetailers, getRetailerDetail } from "../../../services/RetailerService";
+import { Card, CardContent } from "../../../components/ui/card";
+import { Input } from "../../../components/ui/input";
+import { Button } from "../../../components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../../components/ui/table";
 import { Search, Plus, Edit, Trash2, Filter, ChevronDown, Eye } from "lucide-react";
-import CreateGood from "./CreateGoodModal";
-import UpdateGoodModal from "./UpdateGoodModal";
-import DeleteModal from "../../components/Common/DeleteModal";
-import { ProductDetail } from "./ViewGoodModal";
+import { RetailerDetail } from "./ViewRetailerModal";
+import DeleteModal from "../../../components/Common/DeleteModal";
+// import CreateSupplier from "./CreateSupplierModal";
+// import UpdateSupplier from "./UpdateSupplierModal";
 
-// Type definition for Good
-const Good = {
-  goodsId: "",
-  goodsCode: "",
-  goodsName: "",
-  categoryId: "",
-  supplierId: "",
-  storageConditionId: "",
-  unitMeasureId: "",
+// Type definition for Retailer
+const Retailer = {
+  retailerId: "",
+  companyName: "",
+  brandName: "",
   status: null,
+  createdAt: "",
+  updateAt: ""
 };
 
 
-export default function GoodsPage() {
+export default function RetailersPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("")
   const [showStatusFilter, setShowStatusFilter] = useState(false)
   const [sortField, setSortField] = useState("")
   const [sortAscending, setSortAscending] = useState(true)
-  const [goods, setGoods] = useState([])
+  const [retailers, setRetailers] = useState([])
   const [loading, setLoading] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showUpdateModal, setShowUpdateModal] = useState(false)
@@ -37,9 +35,8 @@ export default function GoodsPage() {
   const [showViewModal, setShowViewModal] = useState(false)
   const [itemToDelete, setItemToDelete] = useState(null)
   const [itemToUpdate, setItemToUpdate] = useState(null)
-  const [updateGoodId, setUpdateGoodId] = useState(null)
   const [itemToView, setItemToView] = useState(null)
-  const [goodDetail, setGoodDetail] = useState(null)
+  const [retailerDetail, setRetailerDetail] = useState(null)
   const [loadingDetail, setLoadingDetail] = useState(false)
   const [pagination, setPagination] = useState({
     pageNumber: 1,
@@ -53,7 +50,8 @@ export default function GoodsPage() {
     try {
       setLoading(true)
 
-      const response = await getGoods({
+
+      const response = await getRetailers({
         pageNumber: searchParams.pageNumber !== undefined ? searchParams.pageNumber : 1,
         pageSize: searchParams.pageSize !== undefined ? searchParams.pageSize : 10,
         search: searchParams.search !== undefined ? searchParams.search : "",
@@ -65,18 +63,18 @@ export default function GoodsPage() {
       if (response && response.data) {
         // API returns response.data.items (array) and response.data.totalCount
         const dataArray = Array.isArray(response.data.items) ? response.data.items : []
-        setGoods(dataArray)
+        setRetailers(dataArray)
         setPagination(prev => ({
           ...prev,
           totalCount: response.data.totalCount || dataArray.length
         }))
       } else {
-        setGoods([])
+        setRetailers([])
         setPagination(prev => ({ ...prev, totalCount: 0 }))
       }
     } catch (error) {
-      console.error("Error fetching goods:", error)
-      setGoods([])
+      console.error("Error fetching retailers:", error)
+      setRetailers([])
       setPagination(prev => ({ ...prev, totalCount: 0 }))
     } finally {
       setLoading(false)
@@ -156,78 +154,78 @@ export default function GoodsPage() {
   }, [sortField, sortAscending])
 
   // Remove client-side filtering since backend already handles search and filter
-  const filteredGoods = useMemo(() => {
-    // Just return the goods from API as they are already filtered
-    return Array.isArray(goods) ? goods : []
-  }, [goods])
+  const filteredRetailers = useMemo(() => {
+    // Just return the retailers from API as they are already filtered
+    return Array.isArray(retailers) ? retailers : []
+  }, [retailers])
 
-  const activeCount = Array.isArray(goods) ? goods.filter((g) => g.status === 1).length : 0
-  const inactiveCount = Array.isArray(goods) ? goods.filter((g) => g.status === 2).length : 0
+  const activeCount = Array.isArray(retailers) ? retailers.filter((r) => r.status === 1).length : 0
+  const inactiveCount = Array.isArray(retailers) ? retailers.filter((r) => r.status === 2).length : 0
 
   const handleCreateSuccess = () => {
-    // Add small delay to ensure API has processed the new record
-    setTimeout(() => {
-      // Refresh data after successful creation
-      fetchData({
-        pageNumber: 1,
-        pageSize: pagination.pageSize,
-        search: searchQuery || "",
-        sortField: sortField,
-        sortAscending: sortAscending,
-        status: statusFilter
-      })
-    }, 500)
+    // Set sort to retailerName descending to show new record at top
+    setSortField("retailerName")
+    setSortAscending(false)
+
+    // Refresh data after successful creation with new sort
+    fetchData({
+      pageNumber: 1,
+      pageSize: pagination.pageSize,
+      search: searchQuery || "",
+      sortField: "retailerName",
+      sortAscending: false,
+      status: statusFilter
+    })
   }
 
-  const handleViewClick = async (good) => {
+  const handleViewClick = async (retailer) => {
     try {
-      console.log("Viewing good:", good)
-      setItemToView(good)
+      console.log("Viewing retailer:", retailer)
+      setItemToView(retailer)
       setLoadingDetail(true)
       setShowViewModal(true)
 
-      const response = await getGoodDetail(good.goodsId)
+      const response = await getRetailerDetail(retailer.retailerId)
       console.log("API Response:", response)
 
       // Handle API response structure: { status: 200, message: "Success", data: {...} }
       if (response && response.status === 200 && response.data) {
-        setGoodDetail(response.data)
-        console.log("Good detail set:", response.data)
+        setRetailerDetail(response.data)
+        console.log("Retailer detail set:", response.data)
       } else {
         console.log("Invalid response structure:", response)
-        window.showToast("Không thể tải chi tiết hàng hóa", "error")
+        window.showToast("Không thể tải chi tiết nhà bán lẻ", "error")
         setShowViewModal(false)
       }
     } catch (error) {
-      console.error("Error fetching good detail:", error)
-      window.showToast("Có lỗi xảy ra khi tải chi tiết hàng hóa", "error")
+      console.error("Error fetching retailer detail:", error)
+      window.showToast("Có lỗi xảy ra khi tải chi tiết nhà bán lẻ", "error")
       setShowViewModal(false)
     } finally {
       setLoadingDetail(false)
     }
   }
 
-  const handleUpdateClick = (good) => {
-    setItemToUpdate(good)
-    setUpdateGoodId(good.goodsId)
+  const handleUpdateClick = (retailer) => {
+    setItemToUpdate(retailer)
     setShowUpdateModal(true)
   }
 
-  const handleDeleteClick = (good) => {
-    setItemToDelete(good)
+  const handleDeleteClick = (retailer) => {
+    setItemToDelete(retailer)
     setShowDeleteModal(true)
   }
 
   const handleDeleteConfirm = async () => {
     try {
-      console.log("Deleting good:", itemToDelete)
-      await deleteGood(itemToDelete?.goodsId)
-      window.showToast(`Đã xóa hàng hóa: ${itemToDelete?.goodsName || ''}`, "success")
+      console.log("Deleting retailer:", itemToDelete)
+      // await deleteRetailer(itemToDelete?.retailerId) // Cần thêm API delete
+      window.showToast(`Đã xóa nhà bán lẻ: ${itemToDelete?.retailerName || ''}`, "success")
       setShowDeleteModal(false)
       setItemToDelete(null)
 
       // Calculate if current page will be empty after deletion
-      const currentPageItemCount = goods.length
+      const currentPageItemCount = retailers.length
       const willPageBeEmpty = currentPageItemCount <= 1
 
       // If current page will be empty and we're not on page 1, go to previous page
@@ -247,13 +245,13 @@ export default function GoodsPage() {
         status: statusFilter
       })
     } catch (error) {
-      console.error("Error deleting good:", error)
+      console.error("Error deleting retailer:", error)
 
       // Show specific error message from API
       if (error.response && error.response.data && error.response.data.message) {
         window.showToast(`Lỗi: ${error.response.data.message}`, "error")
       } else {
-        window.showToast("Có lỗi xảy ra khi xóa hàng hóa", "error")
+        window.showToast("Có lỗi xảy ra khi xóa nhà bán lẻ", "error")
       }
     }
   }
@@ -261,33 +259,11 @@ export default function GoodsPage() {
   const handleUpdateCancel = () => {
     setShowUpdateModal(false)
     setItemToUpdate(null)
-    setUpdateGoodId(null)
-  }
-
-  const handleUpdateSuccess = () => {
-    // Refresh data after successful update
-    fetchData({
-      pageNumber: pagination.pageNumber,
-      pageSize: pagination.pageSize,
-      search: searchQuery || "",
-      sortField: sortField,
-      sortAscending: sortAscending,
-      status: statusFilter
-    })
-    setShowUpdateModal(false)
-    setItemToUpdate(null)
-    setUpdateGoodId(null)
   }
 
   const handleDeleteCancel = () => {
     setShowDeleteModal(false)
     setItemToDelete(null)
-  }
-
-  const handleViewClose = () => {
-    setShowViewModal(false)
-    setItemToView(null)
-    setGoodDetail(null)
   }
 
   const handleStatusFilter = (status) => {
@@ -326,21 +302,27 @@ export default function GoodsPage() {
     }
   }
 
+  const handleViewClose = () => {
+    setShowViewModal(false)
+    setItemToView(null)
+    setRetailerDetail(null)
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Quản lý Hàng hóa</h1>
-            <p className="text-slate-600 mt-1">Quản lý các hàng hóa sản phẩm trong hệ thống</p>
+            <h1 className="text-3xl font-bold text-slate-900">Quản lý Nhà bán lẻ</h1>
+            <p className="text-slate-600 mt-1">Quản lý các nhà bán lẻ trong hệ thống</p>
           </div>
           <Button
             className="bg-[#237486] hover:bg-[#1e5f6b] h-11 px-6 text-white"
             onClick={() => setShowCreateModal(true)}
           >
             <Plus className="mr-2 h-4 w-4" />
-            Thêm hàng hóa
+            Thêm nhà bán lẻ
           </Button>
         </div>
 
@@ -348,7 +330,7 @@ export default function GoodsPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="border-l-4 border-l-[#237486]">
             <CardContent className="pt-6">
-              <div className="text-sm font-medium text-slate-600">Tổng hàng hóa</div>
+              <div className="text-sm font-medium text-slate-600">Tổng nhà bán lẻ</div>
               <div className="text-3xl font-bold text-slate-900 mt-2">{pagination.totalCount}</div>
             </CardContent>
           </Card>
@@ -372,7 +354,7 @@ export default function GoodsPage() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
               <Input
-                placeholder="Tìm kiếm theo mã hoặc tên hàng hóa..."
+                placeholder="Tìm kiếm theo tên công ty hoặc thương hiệu..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 h-12 text-base"
@@ -381,7 +363,7 @@ export default function GoodsPage() {
           </CardContent>
         </Card>
 
-        {/* Goods Table */}
+        {/* Retailers Table */}
         <Card className="shadow-lg overflow-hidden p-0">
           <div className="w-full">
             {loading ? (
@@ -396,22 +378,19 @@ export default function GoodsPage() {
                       <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-20">
                         STT
                       </TableHead>
-                      <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-32">
-                        Mã hàng hóa
-                      </TableHead>
-                      <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-48">
-                        <div className="flex items-center space-x-2 cursor-pointer hover:bg-white/10 rounded p-1 -m-1" onClick={() => handleSort("goodsName")}>
-                          <span>Tên hàng hóa</span>
+                      <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-96">
+                        <div className="flex items-center space-x-2 cursor-pointer hover:bg-white/10 rounded p-1 -m-1" onClick={() => handleSort("retailerName")}>
+                          <span>Tên nhà bán lẻ</span>
                           <div className="flex flex-col">
                             <ChevronDown
-                              className={`h-3 w-3 transition-colors ${sortField === "goodsName" && sortAscending
+                              className={`h-3 w-3 transition-colors ${sortField === "retailerName" && sortAscending
                                   ? 'text-white'
                                   : 'text-white/50'
                                 }`}
                               style={{ transform: 'translateY(1px)' }}
                             />
                             <ChevronDown
-                              className={`h-3 w-3 transition-colors ${sortField === "goodsName" && !sortAscending
+                              className={`h-3 w-3 transition-colors ${sortField === "retailerName" && !sortAscending
                                   ? 'text-white'
                                   : 'text-white/50'
                                 }`}
@@ -420,14 +399,8 @@ export default function GoodsPage() {
                           </div>
                         </div>
                       </TableHead>
-                      <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-24">
-                        Danh mục
-                      </TableHead>
-                      <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-32">
-                        Nhà cung cấp
-                      </TableHead>
-                      <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-24">
-                        Đơn vị tính
+                      <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-40">
+                        Số điện thoại
                       </TableHead>
                       <TableHead className="font-semibold text-white px-4 py-3 first:pl-6 last:pr-6 border-0 w-40">
                         <div className="flex items-center justify-center space-x-2">
@@ -478,8 +451,8 @@ export default function GoodsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredGoods.length > 0 ? (
-                      filteredGoods.map((good, index) => (
+                    {filteredRetailers.length > 0 ? (
+                      filteredRetailers.map((retailer, index) => (
                         <TableRow
                           key={index}
                           className={`
@@ -490,17 +463,14 @@ export default function GoodsPage() {
                           <TableCell className="text-slate-600 px-4 py-3 first:pl-6 last:pr-6 border-0 w-20 text-center font-medium">
                             {index + 1}
                           </TableCell>
-                          <TableCell className="font-medium text-slate-900 px-4 py-3 first:pl-6 last:pr-6 border-0 w-32">{good?.goodsCode || ''}</TableCell>
-                          <TableCell className="text-slate-700 px-4 py-3 first:pl-6 last:pr-6 border-0 w-48">{good?.goodsName || ''}</TableCell>
-                          <TableCell className="text-slate-700 px-4 py-3 first:pl-6 last:pr-6 border-0 w-24 text-center">{good?.categoryName || ''}</TableCell>
-                          <TableCell className="text-slate-700 px-4 py-3 first:pl-6 last:pr-6 border-0 w-32 text-center">{good?.companyName || ''}</TableCell>
-                          <TableCell className="text-slate-700 px-4 py-3 first:pl-6 last:pr-6 border-0 w-24 text-center">{good?.unitMeasureName || ''}</TableCell>
+                          <TableCell className="font-medium text-slate-900 px-4 py-3 first:pl-6 last:pr-6 border-0 w-96">{retailer?.retailerName || ''}</TableCell>
+                          <TableCell className="text-slate-700 px-4 py-3 first:pl-6 last:pr-6 border-0 w-40 text-center">{retailer?.phone || ''}</TableCell>
                           <TableCell className="text-slate-700 px-4 py-3 first:pl-6 last:pr-6 border-0 w-40 text-center">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${good?.status === 1
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${retailer?.status === 1
                                 ? 'bg-green-100 text-green-800'
                                 : 'bg-red-100 text-red-800'
                               }`}>
-                              {good?.status === 1 ? 'Hoạt động' : 'Ngừng hoạt động'}
+                              {retailer?.status === 1 ? 'Hoạt động' : 'Ngừng hoạt động'}
                             </span>
                           </TableCell>
                           <TableCell className="text-slate-600 px-4 py-3 first:pl-6 last:pr-6 border-0 text-center">
@@ -508,21 +478,21 @@ export default function GoodsPage() {
                               <button
                                 className="p-1 hover:bg-slate-100 rounded transition-colors"
                                 title="Xem chi tiết"
-                                onClick={() => handleViewClick(good)}
+                                onClick={() => handleViewClick(retailer)}
                               >
                                 <Eye className="h-4 w-4 text-[#1a7b7b]" />
                               </button>
                               <button
                                 className="p-1 hover:bg-slate-100 rounded transition-colors"
                                 title="Chỉnh sửa"
-                                onClick={() => handleUpdateClick(good)}
+                                onClick={() => handleUpdateClick(retailer)}
                               >
                                 <Edit className="h-4 w-4 text-[#1a7b7b]" />
                               </button>
                               <button
                                 className="p-1 hover:bg-slate-100 rounded transition-colors"
                                 title="Xóa"
-                                onClick={() => handleDeleteClick(good)}
+                                onClick={() => handleDeleteClick(retailer)}
                               >
                                 <Trash2 className="h-4 w-4 text-red-500" />
                               </button>
@@ -532,8 +502,8 @@ export default function GoodsPage() {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center py-12 text-slate-500">
-                          Không tìm thấy hàng hóa nào
+                        <TableCell colSpan={5} className="text-center py-12 text-slate-500">
+                          Không tìm thấy nhà bán lẻ nào
                         </TableCell>
                       </TableRow>
                     )}
@@ -550,7 +520,7 @@ export default function GoodsPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div className="text-sm text-slate-600">
-                  Hiển thị {((pagination.pageNumber - 1) * pagination.pageSize) + 1} - {Math.min(pagination.pageNumber * pagination.pageSize, pagination.totalCount)} trong tổng số {pagination.totalCount} hàng hóa
+                  Hiển thị {((pagination.pageNumber - 1) * pagination.pageSize) + 1} - {Math.min(pagination.pageNumber * pagination.pageSize, pagination.totalCount)} trong tổng số {pagination.totalCount} nhà bán lẻ
                 </div>
 
                 <div className="flex items-center space-x-4">
@@ -639,40 +609,40 @@ export default function GoodsPage() {
         )}
       </div>
 
-      {/* Create Good Modal */}
-      <CreateGood
+      {/* Create Supplier Modal */}
+      {/* <CreateSupplier
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onSuccess={handleCreateSuccess}
-      />
+      /> */}
 
-      {/* Update Good Modal */}
-      <UpdateGoodModal
+      {/* Update Retailer Modal - Tạm thời tắt vì chưa có component */}
+      {/* <UpdateRetailer
         isOpen={showUpdateModal}
         onClose={handleUpdateCancel}
-        onSuccess={handleUpdateSuccess}
-        goodId={updateGoodId}
-      />
+        onSuccess={handleCreateSuccess}
+        retailerData={itemToUpdate}
+      /> */}
 
       {/* Delete Confirmation Modal */}
       <DeleteModal
         isOpen={showDeleteModal}
         onClose={handleDeleteCancel}
         onConfirm={handleDeleteConfirm}
-        itemName={itemToDelete?.goodsName || ""}
+        itemName={itemToDelete?.retailerName || ""}
       />
 
-      {/* View Good Detail Modal */}
+      {/* View Retailer Detail Modal */}
       {showViewModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             {loadingDetail ? (
               <div className="flex items-center justify-center py-12">
-                <div className="text-slate-600">Đang tải chi tiết hàng hóa...</div>
+                <div className="text-slate-600">Đang tải chi tiết nhà bán lẻ...</div>
               </div>
-            ) : goodDetail ? (
-              <ProductDetail
-                product={goodDetail}
+            ) : retailerDetail ? (
+              <RetailerDetail
+                retailer={retailerDetail}
                 onClose={handleViewClose}
               />
             ) : (

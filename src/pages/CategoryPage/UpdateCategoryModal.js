@@ -30,7 +30,7 @@ export default function UpdateCategory({ isOpen, onClose, onSuccess, categoryDat
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     // Validate form data using utility function
     if (!validateAndShowError(formData)) {
       return
@@ -43,19 +43,19 @@ export default function UpdateCategory({ isOpen, onClose, onSuccess, categoryDat
 
     try {
       setLoading(true)
-      
+
       // Only change status if user selected different from original
       const originalStatus = parseInt(categoryData.status)
       const selectedStatus = parseInt(formData.status)
       const statusChanged = originalStatus !== selectedStatus
-      
+
       const updateData = {
         categoryName: formData.categoryName.trim(),
         description: formData.description.trim(),
         categoryId: parseInt(categoryData.categoryId),
         status: statusChanged ? selectedStatus : originalStatus // Keep original if not changed
       }
-      
+
       console.log("Original status:", originalStatus, "Selected status:", selectedStatus)
       console.log("Status changed:", statusChanged)
       console.log("Update data:", updateData)
@@ -65,7 +65,7 @@ export default function UpdateCategory({ isOpen, onClose, onSuccess, categoryDat
         categoryId: !isNaN(updateData.categoryId),
         status: [1, 2].includes(updateData.status)
       })
-      
+
       const response = await updateCategory(updateData)
       console.log("Category updated:", response)
       window.showToast("Cập nhật danh mục thành công!", "success")
@@ -73,7 +73,7 @@ export default function UpdateCategory({ isOpen, onClose, onSuccess, categoryDat
       onClose && onClose()
     } catch (error) {
       console.error("Error updating category:", error)
-      
+
       // Show specific error message from API
       if (error.response && error.response.data && error.response.data.message) {
         window.showToast(`Lỗi: ${error.response.data.message}`, "error")
@@ -109,7 +109,7 @@ export default function UpdateCategory({ isOpen, onClose, onSuccess, categoryDat
             <X className="h-5 w-5 text-gray-500" />
           </button>
         </div>
-        
+
         {/* Content */}
         <div className="p-6">
 

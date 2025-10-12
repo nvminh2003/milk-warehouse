@@ -1,6 +1,6 @@
 import { routes } from "./routes/routes";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import ToastManager from "./components/ToastManager";
+import ToastManager from "./components/Common/ToastManager";
 
 function App() {
   return (
