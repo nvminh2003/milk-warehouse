@@ -62,7 +62,6 @@ export const ComponentIcon = ({ name, color = "white", size = 20, collapsed = fa
     isPartnerIcon || isRetailerIcon || isSupplierIcon || isThermometerIcon ||
     isPackageIcon || isBuildingIcon || isDropletsIcon || isSunIcon || isTagIcon ||
     isMapPinIcon || isBoxIcon || isCloseIcon || isQrcodeIcon || isProductVariantIcon ||
-
     isPhoneIcon || isEmailIcon || isTaxIcon || isCalendarIcon || isStreamlineplumpIcon;
 
   return (

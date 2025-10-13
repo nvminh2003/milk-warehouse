@@ -109,7 +109,7 @@ export function SupplierDetail({ supplier, onClose }) {
             <Card className="shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-xl">
-                  <ComponentIcon name="phone" size={30} color="#374151" />
+                  <ComponentIcon name="streamlineplump" size={30} color="#374151" />
                   Thông tin liên hệ
                 </CardTitle>
               </CardHeader>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { getSuppliers, deleteSupplier } from "../../../services/SupplierService";
+import { getSuppliers, deleteSupplier, updateSupplierStatus } from "../../../services/SupplierService";
 import { Card, CardContent } from "../../../components/ui/card";
 import { Input } from "../../../components/ui/input";
 import { Button } from "../../../components/ui/button";
@@ -9,6 +9,8 @@ import CreateSupplier from "./CreateSupplierModal";
 import { SupplierDetail } from "./ViewSupplierModal";
 import UpdateSupplier from "./UpdateSupplierModal";
 import DeleteModal from "../../../components/Common/DeleteModal";
+import { StatusToggle } from "../../../components/Common/SwitchToggle/StatusToggle";
+import { extractErrorMessage } from "../../../utils/Validation";
 
 // Type definition for Supplier
 const Supplier = {
@@ -244,6 +246,30 @@ export default function SuppliersPage() {
     setItemToDelete(null)
   }
 
+  const handleStatusChange = async (supplierId, newStatus) => {
+    try {
+      await updateSupplierStatus(supplierId, newStatus)
+      
+      // Update local state
+      setSuppliers(prevSuppliers => 
+        prevSuppliers.map(supplier => 
+          supplier.supplierId === supplierId 
+            ? { ...supplier, status: newStatus }
+            : supplier
+        )
+      )
+      
+      const statusText = newStatus === 1 ? "kích hoạt" : "ngừng hoạt động"
+      window.showToast(`Đã ${statusText} nhà cung cấp thành công`, "success")
+    } catch (error) {
+      console.error("Error updating supplier status:", error)
+      
+      // Sử dụng extractErrorMessage để xử lý lỗi nhất quán
+      const errorMessage = extractErrorMessage(error, "Có lỗi xảy ra khi cập nhật trạng thái")
+      window.showToast(errorMessage, "error")
+    }
+  }
+
 
   const handleStatusFilter = (status) => {
     setStatusFilter(status)
@@ -439,12 +465,14 @@ export default function SuppliersPage() {
                           <TableCell className="font-medium text-slate-900 px-4 py-3 first:pl-6 last:pr-6 border-0 w-96">{supplier?.companyName || ''}</TableCell>
                           <TableCell className="text-slate-700 px-4 py-3 first:pl-6 last:pr-6 border-0">{supplier?.brandName || ''}</TableCell>
                           <TableCell className="text-slate-700 px-4 py-3 first:pl-6 last:pr-6 border-0 w-40 text-center">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${supplier?.status === 1
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-red-100 text-red-800'
-                              }`}>
-                              {supplier?.status === 1 ? 'Hoạt động' : 'Ngừng hoạt động'}
-                            </span>
+                            <div className="flex justify-center">
+                              <StatusToggle
+                                status={supplier?.status}
+                                onStatusChange={handleStatusChange}
+                                supplierId={supplier?.supplierId}
+                                supplierName={supplier?.companyName}
+                              />
+                            </div>
                           </TableCell>
                           <TableCell className="text-slate-600 px-4 py-3 first:pl-6 last:pr-6 border-0 text-center">
                             <div className="flex items-center justify-center space-x-2">
