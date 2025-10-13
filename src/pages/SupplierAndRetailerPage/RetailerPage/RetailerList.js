@@ -250,7 +250,6 @@ export default function RetailersPage() {
     } catch (error) {
       console.error("Error deleting retailer:", error)
 
-      // Sử dụng extractErrorMessage để xử lý lỗi từ API
       const errorMessage = extractErrorMessage(error, "Có lỗi xảy ra khi xóa nhà bán lẻ")
       window.showToast(errorMessage, "error")
     }
