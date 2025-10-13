@@ -10,8 +10,6 @@ export const getSuppliers = async (searchParams = {}) => {
             sortAscending: searchParams.sortAscending !== undefined ? searchParams.sortAscending : true,
             filters: searchParams.status ? { status: searchParams.status } : {}
         };
-
-
         const res = await api.post("/Supplier/Suppliers", body);
         console.log("Supplier API response:", res.data);
         console.log("Search params received:", searchParams);
@@ -23,6 +21,49 @@ export const getSuppliers = async (searchParams = {}) => {
     }
 };
 
+export const getSupplierDetail = async (supplierId) => {
+    try {
+        const res = await api.get(`/Supplier/GetSupplierBySupplierId/${supplierId}`);
+        console.log("Get supplier detail response:", res.data);
+        return res.data;
+    } catch (error) {
+        console.error("Error fetching supplier detail:", error);
+        throw error;
+    }
+};
 
+// Create new supplier
+export const createSupplier = async (supplierData) => {
+    try {
+        const res = await api.post('/Supplier/Create', supplierData);
+        console.log("Create supplier response:", res.data);
+        return res.data;
+    } catch (error) {
+        console.error("Error creating supplier:", error);
+        throw error;
+    }
+};
 
+// Update supplier
+export const updateSupplier = async (supplierData) => {
+    try {
+        const res = await api.put('/Supplier/Update', supplierData);
+        console.log("Update supplier response:", res.data);
+        return res.data;
+    } catch (error) {
+        console.error("Error updating supplier:", error);
+        throw error;
+    }
+};
 
+// Delete supplier
+export const deleteSupplier = async (supplierId) => {
+    try {
+        const res = await api.delete(`/Supplier/Delete/${supplierId}`);
+        console.log("Delete supplier response:", res.data);
+        return res.data;
+    } catch (error) {
+        console.error("Error deleting supplier:", error);
+        throw error;
+    }
+};

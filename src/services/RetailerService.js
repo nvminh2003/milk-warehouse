@@ -31,3 +31,39 @@ export const getRetailerDetail = async (retailerId) => {
         throw error;
     }
 };
+
+// Create new retailer
+export const createRetailer = async (retailerData) => {
+    try {
+        const res = await api.post('/Retailer/Create', retailerData);
+        console.log("Create retailer response:", res.data);
+        return res.data;
+    } catch (error) {
+        console.error("Error creating retailer:", error);
+        throw error;
+    }
+};
+
+// Update retailer
+export const updateRetailer = async (retailerData) => {
+    try {
+        const res = await api.put('/Retailer/Update', retailerData);
+        console.log("Update retailer response:", res.data);
+        return res.data;
+    } catch (error) {
+        console.error("Error updating retailer:", error);
+        throw error;
+    }
+};
+
+// Delete retailer
+export const deleteRetailer = async (retailerId) => {
+    try {
+        const res = await api.delete(`/Retailer/Delete/${retailerId}`);
+        console.log("Delete retailer response:", res.data);
+        return res.data;
+    } catch (error) {
+        console.error("Error deleting retailer:", error);
+        throw error;
+    }
+};

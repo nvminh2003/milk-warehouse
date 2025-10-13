@@ -8,6 +8,7 @@ import { Search, Plus, Edit, Trash2, Filter, ChevronDown } from "lucide-react";
 import CreateCategory from "./CreateCategoryModal";
 import UpdateCategory from "./UpdateCategoryModal";
 import DeleteModal from "../../components/Common/DeleteModal";
+import { extractErrorMessage } from "../../utils/Validation";
 
 // Type definition for Category
 const Category = {
@@ -212,13 +213,8 @@ export default function CategoriesPage() {
       })
     } catch (error) {
       console.error("Error deleting category:", error)
-
-      // Show specific error message from API
-      if (error.response && error.response.data && error.response.data.message) {
-        window.showToast(`Lỗi: ${error.response.data.message}`, "error")
-      } else {
-        window.showToast("Có lỗi xảy ra khi xóa danh mục", "error")
-      }
+      const cleanMsg = extractErrorMessage(error, "Có lỗi xảy ra khi xóa danh mục")
+      window.showToast(`Lỗi: ${cleanMsg}`, "error")
     }
   }
 

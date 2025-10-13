@@ -8,6 +8,7 @@ import { Search, Plus, Edit, Trash2, Filter, ChevronDown } from "lucide-react";
 import CreateStorageCondition from "./CreateStorageConditionModal";
 import UpdateStorageCondition from "./UpdateStorageConditionModal";
 import DeleteModal from "../../../components/Common/DeleteModal";
+import { extractErrorMessage } from "../../../utils/Validation";
 
 // Type definition for StorageCondition
 const StorageCondition = {
@@ -244,13 +245,8 @@ export default function StorageConditionPage() {
       })
     } catch (error) {
       console.error("Error deleting storage condition:", error)
-      
-      // Show specific error message from API
-      if (error.response && error.response.data && error.response.data.message) {
-        window.showToast(`${error.response.data.message}`, "error")
-      } else {
-        window.showToast("Có lỗi xảy ra khi xóa điều kiện bảo quản", "error")
-      }
+      const cleanMsg = extractErrorMessage(error, "Có lỗi xảy ra khi xóa điều kiện bảo quản")
+      window.showToast(cleanMsg, "error")
     }
   }
 

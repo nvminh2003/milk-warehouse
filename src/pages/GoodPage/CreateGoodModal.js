@@ -10,7 +10,7 @@ import { getCategory } from "../../services/CategoryService/CategoryServices"
 import { getSuppliers } from "../../services/SupplierService"
 import { getStorageCondition } from "../../services/StorageConditionService"
 import { getUnitMeasure } from "../../services/UnitMeasureService"
-import { validateAndShowError } from "../../utils/Validation"
+import { validateAndShowError, extractErrorMessage } from "../../utils/Validation"
 
 export default function CreateGood({ isOpen, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
@@ -51,7 +51,8 @@ export default function CreateGood({ isOpen, onClose, onSuccess }) {
       setUnitMeasures(unitMeasuresRes?.data?.items || [])
     } catch (error) {
       console.error("Error loading dropdown data:", error)
-      window.showToast("Lỗi khi tải dữ liệu dropdown", "error")
+      const errorMessage = extractErrorMessage(error, "Lỗi khi tải dữ liệu dropdown")
+      window.showToast(errorMessage, "error")
     } finally {
       setLoadingData(false)
     }
@@ -77,12 +78,9 @@ export default function CreateGood({ isOpen, onClose, onSuccess }) {
     } catch (error) {
       console.error("Error creating good:", error)
 
-      // Show specific error message from API
-      if (error.response && error.response.data && error.response.data.message) {
-        window.showToast(`Lỗi: ${error.response.data.message}`, "error")
-      } else {
-        window.showToast("Có lỗi xảy ra khi thêm hàng hóa", "error")
-      }
+      // Sử dụng extractErrorMessage để xử lý lỗi từ API
+      const errorMessage = extractErrorMessage(error, "Có lỗi xảy ra khi thêm hàng hóa")
+      window.showToast(`Lỗi: ${errorMessage}`, "error")
     } finally {
       setLoading(false)
     }

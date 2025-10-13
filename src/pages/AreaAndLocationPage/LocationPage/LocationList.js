@@ -11,6 +11,7 @@ import CreateLocationModal from "./CreateLocationModal";
 import UpdateLocationModal from "./UpdateLocationModal";
 import { Card, CardContent } from "../../../components/ui/card";
 import { Table as CustomTable, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../../components/ui/table";
+import { extractErrorMessage } from "../../../utils/Validation";
 
 
 const LocationList = () => {
@@ -249,12 +250,7 @@ const LocationList = () => {
             });
         } catch (error) {
             console.error("Error creating location:", error);
-            const errorMsg =
-                error?.response?.data?.message?.replace(/^\[.*?\]\s*/, "") ||
-                error?.message ||
-                "Có lỗi xảy ra, vui lòng thử lại!";
-
-            const cleanMsg = errorMsg.replace(/^\[[^\]]*\]\s*/, "")
+            const cleanMsg = extractErrorMessage(error);
 
             window.showToast(cleanMsg, "error");
             message.error("Có lỗi xảy ra, vui lòng thử lại!");
@@ -296,12 +292,7 @@ const LocationList = () => {
             });
         } catch (error) {
             console.error("Error updating location:", error);
-            const errorMsg =
-                error?.response?.data?.message?.replace(/^\[.*?\]\s*/, "") ||
-                error?.message ||
-                "Có lỗi xảy ra, vui lòng thử lại!";
-
-            const cleanMsg = errorMsg.replace(/^\[[^\]]*\]\s*/, "")
+            const cleanMsg = extractErrorMessage(error);
 
             window.showToast(cleanMsg, "error");
             message.error("Có lỗi xảy ra, vui lòng thử lại!");
@@ -368,11 +359,10 @@ const LocationList = () => {
             filters: [
                 { text: "Hoạt động", value: 1 },
                 { text: "Không hoạt động", value: 2 },
-                { text: "Đã xóa", value: 3 },
             ],
             onFilter: (value, record) => record.status === value,
             render: (status) => {
-                const map = { 1: "Hoạt động", 2: "Không hoạt động", 3: "Đã xóa" };
+                const map = { 1: "Hoạt động", 2: "Không hoạt động",};
                 const color = status === 1 ? "green" : status === 2 ? "orange" : "red";
                 return <Tag color={color}>{map[status]}</Tag>;
             },

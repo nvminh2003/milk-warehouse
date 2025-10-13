@@ -6,7 +6,7 @@ import { Label } from "../../../components/ui/label"
 import { Card } from "../../../components/ui/card"
 import { X } from "lucide-react"
 import { updateStorageCondition } from "../../../services/StorageConditionService"
-import { validateAndShowError } from "../../../utils/Validation"
+import { validateAndShowError, extractErrorMessage } from "../../../utils/Validation"
 
 export default function UpdateStorageCondition({ isOpen, onClose, onSuccess, storageConditionData }) {
   const [formData, setFormData] = useState({
@@ -77,13 +77,8 @@ export default function UpdateStorageCondition({ isOpen, onClose, onSuccess, sto
       onClose && onClose()
     } catch (error) {
       console.error("Error updating storage condition:", error)
-      
-      // Show specific error message from API
-      if (error.response && error.response.data && error.response.data.message) {
-        window.showToast(`${error.response.data.message}`, "error")
-      } else {
-        window.showToast("Có lỗi xảy ra khi cập nhật điều kiện bảo quản", "error")
-      }
+      const cleanMsg = extractErrorMessage(error, "Có lỗi xảy ra khi cập nhật điều kiện bảo quản")
+      window.showToast(cleanMsg, "error")
     } finally {
       setLoading(false)
     }

@@ -4,10 +4,11 @@ import { Card, CardContent } from "../../../components/ui/card";
 import { Input } from "../../../components/ui/input";
 import { Button } from "../../../components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../../components/ui/table";
-import { Search, Plus, Edit, Trash2, Filter, ChevronDown } from "lucide-react";
-// import CreateSupplier from "./CreateSupplierModal";
-// import UpdateSupplier from "./UpdateSupplierModal";
-// import DeleteModal from "../../../components/DeleteModal";
+import { Search, Plus, Edit, Trash2, Filter, ChevronDown, Eye } from "lucide-react";
+import CreateSupplier from "./CreateSupplierModal";
+import { SupplierDetail } from "./ViewSupplierModal";
+import UpdateSupplier from "./UpdateSupplierModal";
+import DeleteModal from "../../../components/Common/DeleteModal";
 
 // Type definition for Supplier
 const Supplier = {
@@ -31,8 +32,10 @@ export default function SuppliersPage() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showUpdateModal, setShowUpdateModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showViewModal, setShowViewModal] = useState(false)
   const [itemToDelete, setItemToDelete] = useState(null)
-  const [itemToUpdate, setItemToUpdate] = useState(null)
+  const [updateSupplierId, setUpdateSupplierId] = useState(null)
+  const [itemToView, setItemToView] = useState(null)
   const [pagination, setPagination] = useState({
     pageNumber: 1,
     pageSize: 10,
@@ -173,65 +176,74 @@ export default function SuppliersPage() {
     })
   }
 
-  // const handleUpdateClick = (supplier) => {
-  //   setItemToUpdate(supplier)
-  //   setShowUpdateModal(true)
-  // }
+  const handleViewClick = (supplier) => {
+    setItemToView(supplier)
+    setShowViewModal(true)
+  }
 
-  // const handleDeleteClick = (supplier) => {
-  //   setItemToDelete(supplier)
-  //   setShowDeleteModal(true)
-  // }
+  const handleUpdateClick = (supplier) => {
+    setUpdateSupplierId(supplier.supplierId)
+    setShowUpdateModal(true)
+  }
 
-  // const handleDeleteConfirm = async () => {
-  //   try {
-  //     console.log("Deleting supplier:", itemToDelete)
-  //     await deleteSupplier(itemToDelete?.supplierId)
-  //     window.showToast(`Đã xóa nhà cung cấp: ${itemToDelete?.companyName || ''}`, "success")
-  //     setShowDeleteModal(false)
-  //     setItemToDelete(null)
+  const handleDeleteClick = (supplier) => {
+    setItemToDelete(supplier)
+    setShowDeleteModal(true)
+  }
 
-  //     // Calculate if current page will be empty after deletion
-  //     const currentPageItemCount = suppliers.length
-  //     const willPageBeEmpty = currentPageItemCount <= 1
+  const handleViewClose = () => {
+    setShowViewModal(false)
+    setItemToView(null)
+  }
 
-  //     // If current page will be empty and we're not on page 1, go to previous page
-  //     let targetPage = pagination.pageNumber
-  //     if (willPageBeEmpty && pagination.pageNumber > 1) {
-  //       targetPage = pagination.pageNumber - 1
-  //       setPagination(prev => ({ ...prev, pageNumber: targetPage }))
-  //     }
+  const handleUpdateSuccess = () => {
+    setShowUpdateModal(false)
+    setUpdateSupplierId(null)
+    fetchData()
+  }
 
-  //     // Refresh data after deletion, keeping current page or going to previous page if needed
-  //     fetchData({
-  //       pageNumber: targetPage,
-  //       pageSize: pagination.pageSize,
-  //       search: searchQuery || "",
-  //       sortField: sortField,
-  //       sortAscending: sortAscending,
-  //       status: statusFilter
-  //     })
-  //   } catch (error) {
-  //     console.error("Error deleting supplier:", error)
+  const handleUpdateCancel = () => {
+    setShowUpdateModal(false)
+    setUpdateSupplierId(null)
+  }
 
-  //     // Show specific error message from API
-  //     if (error.response && error.response.data && error.response.data.message) {
-  //       window.showToast(`Lỗi: ${error.response.data.message}`, "error")
-  //     } else {
-  //       window.showToast("Có lỗi xảy ra khi xóa nhà cung cấp", "error")
-  //     }
-  //   }
-  // }
+  const handleDeleteConfirm = async () => {
+    try {
+      console.log("Deleting supplier:", itemToDelete)
+      await deleteSupplier(itemToDelete?.supplierId)
+      window.showToast(`Đã xóa nhà cung cấp: ${itemToDelete?.companyName || ''}`, "success")
+      setShowDeleteModal(false)
+      setItemToDelete(null)
 
-  // const handleUpdateCancel = () => {
-  //   setShowUpdateModal(false)
-  //   setItemToUpdate(null)
-  // }
+      // Calculate if current page will be empty after deletion
+      const currentPageItemCount = suppliers.length
+      const willPageBeEmpty = currentPageItemCount <= 1
 
-  // const handleDeleteCancel = () => {
-  //   setShowDeleteModal(false)
-  //   setItemToDelete(null)
-  // }
+      // If current page will be empty and we're not on page 1, go to previous page
+      let targetPage = pagination.pageNumber
+      if (willPageBeEmpty && pagination.pageNumber > 1) {
+        targetPage = pagination.pageNumber - 1
+        setPagination(prev => ({ ...prev, pageNumber: targetPage }))
+      }
+
+      // Refresh data after deletion, keeping current page or going to previous page if needed
+      await fetchData({
+        pageNumber: targetPage,
+        pageSize: pagination.pageSize,
+        searchQuery: searchQuery,
+        status: statusFilter
+      })
+    } catch (error) {
+      console.error("Error deleting supplier:", error)
+      window.showToast("Có lỗi xảy ra khi xóa nhà cung cấp", "error")
+    }
+  }
+
+  const handleDeleteCancel = () => {
+    setShowDeleteModal(false)
+    setItemToDelete(null)
+  }
+
 
   const handleStatusFilter = (status) => {
     setStatusFilter(status)
@@ -436,7 +448,14 @@ export default function SuppliersPage() {
                           </TableCell>
                           <TableCell className="text-slate-600 px-4 py-3 first:pl-6 last:pr-6 border-0 text-center">
                             <div className="flex items-center justify-center space-x-2">
-                              {/* <button 
+                              <button
+                                className="p-1 hover:bg-slate-100 rounded transition-colors"
+                                title="Xem chi tiết"
+                                onClick={() => handleViewClick(supplier)}
+                              >
+                                <Eye className="h-4 w-4 text-[#1a7b7b]" />
+                              </button>
+                              <button 
                                 className="p-1 hover:bg-slate-100 rounded transition-colors"
                                 title="Chỉnh sửa"
                                 onClick={() => handleUpdateClick(supplier)}
@@ -449,8 +468,7 @@ export default function SuppliersPage() {
                                 onClick={() => handleDeleteClick(supplier)}
                               >
                                 <Trash2 className="h-4 w-4 text-red-500" />
-                              </button> */}
-                              <span className="text-slate-400 text-sm">Tạm thời tắt</span>
+                              </button>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -565,27 +583,35 @@ export default function SuppliersPage() {
       </div>
 
       {/* Create Supplier Modal */}
-      {/* <CreateSupplier
+      <CreateSupplier
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onSuccess={handleCreateSuccess}
-      /> */}
+      />
 
-      {/* Update Supplier Modal - Tạm thời tắt */}
-      {/* <UpdateSupplier
+      {/* Update Supplier Modal */}
+      <UpdateSupplier
         isOpen={showUpdateModal}
         onClose={handleUpdateCancel}
-        onSuccess={handleCreateSuccess}
-        supplierData={itemToUpdate}
-      /> */}
+        onSuccess={handleUpdateSuccess}
+        supplierId={updateSupplierId}
+      />
 
-      {/* Delete Confirmation Modal - Tạm thời tắt */}
-      {/* <DeleteModal
+      {/* Delete Confirmation Modal */}
+      <DeleteModal
         isOpen={showDeleteModal}
         onClose={handleDeleteCancel}
         onConfirm={handleDeleteConfirm}
         itemName={itemToDelete?.companyName || ""}
-      /> */}
+      />
+
+      {/* View Supplier Detail Modal */}
+      {showViewModal && itemToView && (
+        <SupplierDetail
+          supplier={itemToView}
+          onClose={handleViewClose}
+        />
+      )}
     </div>
   )
 }

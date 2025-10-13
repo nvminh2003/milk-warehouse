@@ -105,6 +105,33 @@ export const showValidationError = (message) => {
 }
 
 /**
+ * Clean error message by removing array brackets and extra whitespace
+ * @param {string} errorMsg - Error message to clean
+ * @returns {string} - Cleaned error message
+ */
+export const cleanErrorMessage = (errorMsg) => {
+  if (!errorMsg) return ""
+  
+  // Remove array brackets and extra whitespace
+  return errorMsg.replace(/^\[[^\]]*\]\s*/, "").trim()
+}
+
+/**
+ * Extract and clean error message from API error response
+ * @param {Object} error - Error object from API call
+ * @param {string} fallbackMessage - Fallback message if no error message found
+ * @returns {string} - Cleaned error message
+ */
+export const extractErrorMessage = (error, fallbackMessage = "Có lỗi xảy ra, vui lòng thử lại!") => {
+  const errorMsg = 
+    error?.response?.data?.message ||
+    error?.message ||
+    fallbackMessage
+
+  return cleanErrorMessage(errorMsg)
+}
+
+/**
  * Validate and show error if invalid
  * @param {Object} formData - Dữ liệu form
  * @returns {boolean} - true nếu hợp lệ, false nếu không hợp lệ
