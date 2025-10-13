@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Button, Form, message } from "antd";
-import { getAreas, createArea, updateArea, deleteArea, getAreaDetail } from "../../../services/AreaServices";
-import { getStorageCondition } from "../../../services/StorageConditionService";
+import { Button } from "antd";
+import { getAreas, deleteArea, getAreaDetail } from "../../../services/AreaServices";
 import { Edit, Trash2, ChevronDown, Plus, Eye } from "lucide-react";
 import DeleteModal from "../../../components/Common/DeleteModal";
 import SearchBar from "../../../components/Common/SearchBar";
@@ -11,35 +10,69 @@ import CreateAreaModal from "./CreateAreaModal";
 import UpdateAreaModal from "./UpdateAreaModal";
 import { Card, CardContent } from "../../../components/ui/card";
 import { Table as CustomTable, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../../components/ui/table";
-import { extractErrorMessage } from "../../../utils/Validation";
 import { ModalAreaDetail } from "./ViewAreaModal";
+import { extractErrorMessage } from "../../../utils/Validation";
 
 const AreaLists = () => {
     const [areas, setAreas] = useState([]);
-    const [storageConditions, setStorageConditions] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [form] = Form.useForm();
     const [pagination, setPagination] = useState({
         current: 1,
         pageSize: 10,
         total: 0,
     });
-    const [globalStats, setGlobalStats] = useState({ total: 0, active: 0, inactive: 0 });
+
+    // Stats states - không bị ảnh hưởng bởi filter
+    const [totalStats, setTotalStats] = useState({
+        total: 0,
+        active: 0,
+        inactive: 0
+    });
 
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [itemToDelete, setItemToDelete] = useState(null);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showUpdateModal, setShowUpdateModal] = useState(false);
     const [editingArea, setEditingArea] = useState(null);
-    const [areaDetail, setAreaDetail] = useState(null);
-    const [showViewModal, setShowViewModal] = useState(false);
-    const [itemToView, setItemToView] = useState(null);
-    const [loadingDetail, setLoadingDetail] = useState(false)
+    const [updateAreaId, setUpdateAreaId] = useState(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState("");
     const [sortField, setSortField] = useState("");
     const [sortAscending, setSortAscending] = useState(true);
     const searchQueryRef = useRef("");
+    const [areaDetail, setAreaDetail] = useState(null);
+    const [showViewModal, setShowViewModal] = useState(false);
+    const [itemToView, setItemToView] = useState(null);
+    const [loadingDetail, setLoadingDetail] = useState(false)
+
+    // Fetch total stats (không filter)
+    const fetchTotalStats = async () => {
+        try {
+            const res = await getAreas({
+                pageNumber: 1,
+                pageSize: 1000,
+                search: "",
+                filters: {},
+            });
+
+            const payload = res ?? {};
+            const allItems = Array.isArray(payload.items)
+                ? payload.items
+                : Array.isArray(payload.data?.items)
+                    ? payload.data.items
+                    : Array.isArray(payload.data)
+                        ? payload.data
+                        : [];
+
+            const total = allItems.length;
+            const active = allItems.filter((a) => a.status === 1).length;
+            const inactive = allItems.filter((a) => a.status === 2).length;
+
+            setTotalStats({ total, active, inactive });
+        } catch (err) {
+            console.log("Không thể tải thống kê tổng!", err);
+        }
+    };
 
     // Fetch list areas
     const fetchAreas = async (page = 1, pageSize = 10, params = {}) => {
@@ -66,7 +99,7 @@ const AreaLists = () => {
             setPagination({ current: page, pageSize, total });
         } catch (err) {
             console.log("Không thể tải danh sách khu vực!", err);
-            message.error("Không thể tải danh sách khu vực!");
+            window.showToast("Không thể tải danh sách khu vực!", "error");
         } finally {
             setLoading(false);
         }
@@ -74,68 +107,8 @@ const AreaLists = () => {
 
     useEffect(() => {
         fetchAreas(pagination.current, pagination.pageSize);
-        // fetch global stats once on mount
-        fetchStats();
+        fetchTotalStats(); // Load tổng stats
     }, []);
-
-    // Fetch global stats for areas independent of filters/search
-    const fetchStats = async () => {
-        try {
-            // Get total
-            const res = await getAreas({ pageNumber: 1, pageSize: 1 });
-            const payload = res ?? {};
-            const total = (payload.totalCount ?? payload.data?.totalCount) || 0;
-
-            let active = 0;
-            let inactive = 0;
-
-            if (total <= 1000 && total > 0) {
-                // fetch all and compute locally
-                const allRes = await getAreas({ pageNumber: 1, pageSize: total });
-                const items = Array.isArray(allRes.items)
-                    ? allRes.items
-                    : Array.isArray(allRes.data?.items)
-                        ? allRes.data.items
-                        : Array.isArray(allRes.data)
-                            ? allRes.data
-                            : [];
-                active = items.filter((a) => a.status === 1).length;
-                inactive = items.filter((a) => a.status === 2).length;
-            } else {
-                // fallback: ask API for counts using filters
-                const activeRes = await getAreas({ pageNumber: 1, pageSize: 1, filters: { status: 1 } });
-                const inactiveRes = await getAreas({ pageNumber: 1, pageSize: 1, filters: { status: 2 } });
-                active = (activeRes.totalCount ?? activeRes.data?.totalCount) || 0;
-                inactive = (inactiveRes.totalCount ?? inactiveRes.data?.totalCount) || 0;
-            }
-
-            setGlobalStats({ total, active, inactive });
-        } catch (err) {
-            console.error("Error fetching area stats:", err);
-        }
-    };
-
-    useEffect(() => {
-        const fetchStorageCondition = async () => {
-            try {
-                const data = await getStorageCondition();
-                console.log("Fetch storageCondition: ", data)
-                setStorageConditions(data?.data?.items || []);
-            } catch {
-                message.error("Không thể tải danh sách khu vực!");
-            }
-        };
-        fetchStorageCondition();
-    }, []);
-
-    useEffect(() => {
-        if (showUpdateModal && editingArea && storageConditions.length > 0) {
-            form.setFieldsValue({
-                storageConditionId: Number(editingArea.storageConditionId),
-            });
-        }
-    }, [showUpdateModal, storageConditions]);
-
 
     // Search input change handler
     const handleSearchInputChange = (e) => {
@@ -143,7 +116,6 @@ const AreaLists = () => {
         setSearchQuery(value);
         searchQueryRef.current = value;
     };
-
 
     // Debounced search effect
     useEffect(() => {
@@ -216,86 +188,47 @@ const AreaLists = () => {
 
     // Mở modal thêm mới
     const handleOpenCreate = () => {
-        form.resetFields();
-        form.setFieldsValue({ status: 1 });
         setShowCreateModal(true);
     };
 
     // Mở modal sửa
     const handleOpenEdit = (record) => {
-        console.log(">>> storageConditions hiện có:", storageConditions);
-        console.log(">>> record.storageConditionId:", record.storageConditionId);
         setEditingArea(record);
-        form.setFieldsValue({
-            areaName: record.areaName,
-            areaCode: record.areaCode,
-            description: record.description,
-            storageConditionId: record.storageConditionId,
-            status: record.status,
-        });
+        setUpdateAreaId(record.areaId);
         setShowUpdateModal(true);
     };
 
-    // Submit create
-    const handleCreateSubmit = async () => {
-        try {
-            const values = await form.validateFields();
-            const payload = {
-                areaName: values.areaName,
-                areaCode: values.areaCode,
-                description: values.description,
-                storageConditionId: Number(values.storageConditionId),
-                status: 1,
-            };
-
-            await createArea(payload);
-            window.showToast(`Đã tạo khu vực mới: ${payload.areaCode}`, "success");
-
-            setShowCreateModal(false);
-            fetchAreas(pagination.current, pagination.pageSize, {
-                search: searchQuery,
-                filters: {
-                    status: statusFilter ? Number(statusFilter) : undefined
-                }
-            });
-            // refresh global stats
-            fetchStats();
-        } catch (error) {
-            console.error("Error creating area:", error);
-            const cleanMsg = extractErrorMessage(error);
-            window.showToast(cleanMsg, "error");
-        }
+    // Handle create success
+    const handleCreateSuccess = () => {
+        setShowCreateModal(false);
+        fetchAreas(pagination.current, pagination.pageSize, {
+            search: searchQuery,
+            filters: {
+                status: statusFilter ? Number(statusFilter) : undefined
+            }
+        });
+        fetchTotalStats();
     };
 
-    // Submit update
-    const handleUpdateSubmit = async () => {
-        try {
-            const values = await form.validateFields();
-            const payload = {
-                areaName: values.areaName,
-                areaCode: values.areaCode,
-                description: values.description,
-                storageConditionId: Number(values.storageConditionId),
-                status: Number(values.status),
-            };
+    // Handle update success
+    const handleUpdateSuccess = () => {
+        setShowUpdateModal(false);
+        setEditingArea(null);
+        setUpdateAreaId(null);
+        fetchAreas(pagination.current, pagination.pageSize, {
+            search: searchQuery,
+            filters: {
+                status: statusFilter ? Number(statusFilter) : undefined
+            }
+        });
+        fetchTotalStats();
+    };
 
-            await updateArea(editingArea.areaId, payload);
-            window.showToast(`Đã cập nhật khu vực: ${payload.areaCode}`, "success");
-
-            setShowUpdateModal(false);
-            fetchAreas(pagination.current, pagination.pageSize, {
-                search: searchQuery,
-                filters: {
-                    status: statusFilter ? Number(statusFilter) : undefined
-                }
-            });
-            // refresh global stats
-            fetchStats();
-        } catch (error) {
-            console.error("Error updating area:", error);
-            const cleanMsg = extractErrorMessage(error);
-            window.showToast(cleanMsg, "error");
-        }
+    // Handle update cancel
+    const handleUpdateCancel = () => {
+        setShowUpdateModal(false);
+        setEditingArea(null);
+        setUpdateAreaId(null);
     };
 
     const handleViewClose = () => {
@@ -312,23 +245,26 @@ const AreaLists = () => {
             setLoadingDetail(true)
             setShowViewModal(true)
 
+            // Gọi API để lấy chi tiết điều kiện bảo quản
             const response = await getAreaDetail(area.areaId)
             console.log("API Response Area:", response)
 
-            // Handle API response structure: { status: 200, message: "Success", data: {...} }
-            if (response && response.status === 200 && response.data) {
-                setAreaDetail(response.data)
-                console.log("Good detail set:", response.data)
+            // Handle API response structure
+            if (response && response.data) {
+                const areaDetailData = {
+                    ...area,
+                    ...response.data
+                }
+                setAreaDetail(areaDetailData)
+                console.log("Area detail set:", areaDetailData)
             } else {
-                console.log("Invalid response structure:", response)
-                window.showToast("Không thể tải chi tiết hàng hóa", "error")
-                setShowViewModal(false)
+                setAreaDetail(area)
+                console.log("Using fallback area data:", area)
             }
         } catch (error) {
-            console.error("Error fetching good detail:", error)
-            const errorMessage = extractErrorMessage(error, "Có lỗi xảy ra khi tải chi tiết hàng hóa")
-            window.showToast(errorMessage, "error")
-            setShowViewModal(false)
+            console.error("Error loading area detail:", error)
+            setAreaDetail(area)
+            console.log("Using fallback area data due to error:", area)
         } finally {
             setLoadingDetail(false)
         }
@@ -352,18 +288,17 @@ const AreaLists = () => {
                     status: statusFilter ? Number(statusFilter) : undefined,
                 },
             });
-            // refresh global stats
-            fetchStats();
+            fetchTotalStats();
         } catch (error) {
             console.error("Error deleting area:", error);
 
-            // Lấy thông báo lỗi rõ ràng từ backend (nếu có)
-            const cleanMsg = extractErrorMessage(error, "Có lỗi xảy ra khi xóa khu vực!");
-
-            // Hiển thị lỗi chi tiết
-            window.showToast(cleanMsg, "error");
+            const errorMessage = extractErrorMessage(error, "Có lỗi xảy ra khi xóa khu vực!")
+            window.showToast(`Lỗi: ${errorMessage}`, "error")
         }
     };
+
+    // Stats được lấy từ totalStats state (không bị ảnh hưởng bởi filter)
+    const { total: totalCount, active: activeCount, inactive: inactiveCount } = totalStats;
 
     return (
         <div style={{ minHeight: "100vh", background: "linear-gradient(to bottom right, #f8fafc, #e2e8f0)", padding: "24px" }}>
@@ -397,19 +332,19 @@ const AreaLists = () => {
                     <Card style={{ borderLeft: "4px solid #237486" }}>
                         <CardContent style={{ paddingTop: "24px" }}>
                             <div style={{ fontSize: "14px", fontWeight: "500", color: "#64748b" }}>Tổng khu vực</div>
-                            <div style={{ fontSize: "30px", fontWeight: "bold", color: "#0f172a", marginTop: "8px" }}>{globalStats.total}</div>
+                            <div style={{ fontSize: "30px", fontWeight: "bold", color: "#0f172a", marginTop: "8px" }}>{totalCount}</div>
                         </CardContent>
                     </Card>
                     <Card style={{ borderLeft: "4px solid #237486" }}>
                         <CardContent style={{ paddingTop: "24px" }}>
                             <div style={{ fontSize: "14px", fontWeight: "500", color: "#64748b" }}>Hoạt động</div>
-                            <div style={{ fontSize: "30px", fontWeight: "bold", color: "#237486", marginTop: "8px" }}>{globalStats.active}</div>
+                            <div style={{ fontSize: "30px", fontWeight: "bold", color: "#237486", marginTop: "8px" }}>{activeCount}</div>
                         </CardContent>
                     </Card>
                     <Card style={{ borderLeft: "4px solid #237486" }}>
                         <CardContent style={{ paddingTop: "24px" }}>
                             <div style={{ fontSize: "14px", fontWeight: "500", color: "#64748b" }}>Ngừng hoạt động</div>
-                            <div style={{ fontSize: "30px", fontWeight: "bold", color: "#64748b", marginTop: "8px" }}>{globalStats.inactive}</div>
+                            <div style={{ fontSize: "30px", fontWeight: "bold", color: "#64748b", marginTop: "8px" }}>{inactiveCount}</div>
                         </CardContent>
                     </Card>
                 </div>
@@ -462,9 +397,6 @@ const AreaLists = () => {
                                             <TableHead style={{ fontWeight: "600", color: "white", padding: "12px 16px", border: 0 }}>
                                                 Tên khu vực
                                             </TableHead>
-                                            {/* <TableHead style={{ fontWeight: "600", color: "white", padding: "12px 16px", border: 0 }}>
-                                                Điều kiện lưu trữ
-                                            </TableHead> */}
                                             <TableHead style={{ fontWeight: "600", color: "white", padding: "12px 16px", border: 0 }}>
                                                 Mô tả
                                             </TableHead>
@@ -478,7 +410,7 @@ const AreaLists = () => {
                                                         onClearFilter={clearStatusFilter}
                                                         options={[
                                                             { value: "1", label: "Hoạt động" },
-                                                            { value: "2", label: "Không hoạt động" }
+                                                            { value: "2", label: "Ngừng hoạt động" }
                                                         ]}
                                                         placeholder="Tất cả"
                                                         className="status-filter-dropdown"
@@ -511,9 +443,6 @@ const AreaLists = () => {
                                                     <TableCell style={{ color: "#374151", padding: "12px 16px", border: 0 }}>
                                                         {area?.areaName || "—"}
                                                     </TableCell>
-                                                    {/* <TableCell style={{ color: "#374151", padding: "12px 16px", border: 0 }}>
-                                                        {area?.storageConditionId || "—"}
-                                                    </TableCell> */}
                                                     <TableCell style={{ color: "#374151", padding: "12px 16px", border: 0 }}>
                                                         {area?.description?.length > 30 ? area.description.slice(0, 30) + "..." : area?.description || "—"}
                                                     </TableCell>
@@ -526,7 +455,7 @@ const AreaLists = () => {
                                                             backgroundColor: area?.status === 1 ? "#dcfce7" : area?.status === 2 ? "#fef3c7" : "#fef2f2",
                                                             color: area?.status === 1 ? "#166534" : area?.status === 2 ? "#d97706" : "#dc2626"
                                                         }}>
-                                                            {area?.status === 1 ? 'Hoạt động' : area?.status === 2 ? 'Không hoạt động' : 'Đã xóa'}
+                                                            {area?.status === 1 ? 'Hoạt động' : area?.status === 2 ? 'Ngừng hoạt động' : 'Đã xóa'}
                                                         </span>
                                                     </TableCell>
                                                     <TableCell style={{ color: "#64748b", padding: "12px 16px", border: 0, textAlign: "center" }}>
@@ -561,7 +490,7 @@ const AreaLists = () => {
                                             ))
                                         ) : (
                                             <TableRow>
-                                                <TableCell colSpan={7} style={{ textAlign: "center", padding: "48px 0", color: "#64748b" }}>
+                                                <TableCell colSpan={6} style={{ textAlign: "center", padding: "48px 0", color: "#64748b" }}>
                                                     Không tìm thấy khu vực nào
                                                 </TableCell>
                                             </TableRow>
@@ -589,22 +518,18 @@ const AreaLists = () => {
 
             {/* Create Area Modal */}
             <CreateAreaModal
-                isVisible={showCreateModal}
-                onCancel={() => setShowCreateModal(false)}
-                onSubmit={handleCreateSubmit}
-                form={form}
-                loading={loading}
-                storageConditions={storageConditions}
+                isOpen={showCreateModal}
+                onClose={() => setShowCreateModal(false)}
+                onSuccess={handleCreateSuccess}
             />
 
             {/* Update Area Modal */}
             <UpdateAreaModal
-                isVisible={showUpdateModal}
-                onCancel={() => setShowUpdateModal(false)}
-                onSubmit={handleUpdateSubmit}
-                form={form}
-                loading={loading}
-                storageConditions={storageConditions}
+                isOpen={showUpdateModal}
+                onClose={handleUpdateCancel}
+                onSuccess={handleUpdateSuccess}
+                areaId={updateAreaId}
+                areaData={editingArea}
             />
 
             <DeleteModal
@@ -614,26 +539,12 @@ const AreaLists = () => {
                 itemName={itemToDelete?.areaCode || ""}
             />
 
-            {/* View Good Detail Modal */}
-            {showViewModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-                        {loadingDetail ? (
-                            <div className="flex items-center justify-center py-12">
-                                <div className="text-slate-600">Đang tải chi tiết khu vực...</div>
-                            </div>
-                        ) : areaDetail ? (
-                            <ModalAreaDetail
-                                area={areaDetail}
-                                onClose={handleViewClose}
-                            />
-                        ) : (
-                            <div className="flex items-center justify-center py-12">
-                                <div className="text-slate-600">Không có dữ liệu để hiển thị</div>
-                            </div>
-                        )}
-                    </div>
-                </div>
+            {/* View Area Detail Modal */}
+            {showViewModal && areaDetail && (
+                <ModalAreaDetail
+                    area={areaDetail}
+                    onClose={handleViewClose}
+                />
             )}
         </div>
     );
