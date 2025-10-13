@@ -40,6 +40,18 @@ export const getAreas = async (searchParams = {}) => {
     }
 };
 
+// Lấy chi tiết khu vực
+export const getAreaDetail = async (areaId) => {
+    try {
+        const res = await api.get(`/Area/AreaDetail/${areaId}`);
+        console.log("Get area detail response:", res.data);
+        return res.data;
+    } catch (error) {
+        console.error("Error fetching good detail:", error);
+        throw error;
+    }
+};
+
 // Tạo mới Area
 export const createArea = async (data) => {
     try {

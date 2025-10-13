@@ -357,15 +357,15 @@ export default function SuppliersPage() {
                           <div className="flex flex-col">
                             <ChevronDown
                               className={`h-3 w-3 transition-colors ${sortField === "companyName" && sortAscending
-                                  ? 'text-white'
-                                  : 'text-white/50'
+                                ? 'text-white'
+                                : 'text-white/50'
                                 }`}
                               style={{ transform: 'translateY(1px)' }}
                             />
                             <ChevronDown
                               className={`h-3 w-3 transition-colors ${sortField === "companyName" && !sortAscending
-                                  ? 'text-white'
-                                  : 'text-white/50'
+                                ? 'text-white'
+                                : 'text-white/50'
                                 }`}
                               style={{ transform: 'translateY(-1px) rotate(180deg)' }}
                             />
@@ -440,8 +440,8 @@ export default function SuppliersPage() {
                           <TableCell className="text-slate-700 px-4 py-3 first:pl-6 last:pr-6 border-0">{supplier?.brandName || ''}</TableCell>
                           <TableCell className="text-slate-700 px-4 py-3 first:pl-6 last:pr-6 border-0 w-40 text-center">
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${supplier?.status === 1
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-red-100 text-red-800'
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-red-100 text-red-800'
                               }`}>
                               {supplier?.status === 1 ? 'Hoạt động' : 'Ngừng hoạt động'}
                             </span>
@@ -455,14 +455,14 @@ export default function SuppliersPage() {
                               >
                                 <Eye className="h-4 w-4 text-[#1a7b7b]" />
                               </button>
-                              <button 
+                              <button
                                 className="p-1 hover:bg-slate-100 rounded transition-colors"
                                 title="Chỉnh sửa"
                                 onClick={() => handleUpdateClick(supplier)}
                               >
                                 <Edit className="h-4 w-4 text-[#1a7b7b]" />
                               </button>
-                              <button 
+                              <button
                                 className="p-1 hover:bg-slate-100 rounded transition-colors"
                                 title="Xóa"
                                 onClick={() => handleDeleteClick(supplier)}

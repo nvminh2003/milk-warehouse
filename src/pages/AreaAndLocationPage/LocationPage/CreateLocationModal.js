@@ -39,13 +39,18 @@ const CreateLocationModal = ({
                 layout="vertical"
                 size="middle"
                 requiredMark={false}
+                initialValues={{ status: 1 }}
                 style={{ marginTop: 10 }}
             >
                 <Row gutter={16}>
                     <Col span={12}>
                         <Form.Item
                             name="areaId"
-                            label="Khu vực"
+                            label={
+                                <span>
+                                    Tên khu vực <span style={{ color: "red" }}>*</span>
+                                </span>
+                            }
                             rules={[{ required: true, message: "Vui lòng chọn khu vực" }]}
                         >
                             <Select
@@ -70,7 +75,11 @@ const CreateLocationModal = ({
                     <Col span={12}>
                         <Form.Item
                             name="locationCode"
-                            label="Mã vị trí"
+                            label={
+                                <span>
+                                    Mã vị trí <span style={{ color: "red" }}>*</span>
+                                </span>
+                            }
                             rules={[{ required: true, message: "Vui lòng nhập mã vị trí" }]}
                         >
                             <AntInput
@@ -85,7 +94,11 @@ const CreateLocationModal = ({
                     <Col span={12}>
                         <Form.Item
                             name="rack"
-                            label="Kệ"
+                            label={
+                                <span>
+                                    Kệ <span style={{ color: "red" }}>*</span>
+                                </span>
+                            }
                             rules={[{ required: true, message: "Vui lòng nhập tên kệ" }]}
                         >
                             <AntInput
@@ -98,7 +111,11 @@ const CreateLocationModal = ({
                     <Col span={6}>
                         <Form.Item
                             name="row"
-                            label="Hàng (Row)"
+                            label={
+                                <span>
+                                    Hàng <span style={{ color: "red" }}>*</span>
+                                </span>
+                            }
                             rules={[{ required: true, message: "Vui lòng nhập hàng" }]}
                         >
                             <InputNumber
@@ -112,7 +129,11 @@ const CreateLocationModal = ({
                     <Col span={6}>
                         <Form.Item
                             name="column"
-                            label="Cột (Column)"
+                            label={
+                                <span>
+                                    Cột <span style={{ color: "red" }}>*</span>
+                                </span>
+                            }
                             rules={[{ required: true, message: "Vui lòng nhập cột" }]}
                         >
                             <InputNumber
@@ -124,7 +145,7 @@ const CreateLocationModal = ({
                     </Col>
                 </Row>
 
-                <Divider orientation="left">Trạng thái vị trí</Divider>
+                {/* <Divider orientation="left">Trạng thái vị trí</Divider>
 
                 <Row gutter={16}>
                     <Col span={24}>
@@ -142,7 +163,7 @@ const CreateLocationModal = ({
                             </Select>
                         </Form.Item>
                     </Col>
-                </Row>
+                </Row> */}
             </Form>
         </Modal>
     );
