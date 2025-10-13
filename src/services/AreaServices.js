@@ -16,17 +16,17 @@ export const getAreas = async (searchParams = {}) => {
             filters: {},
         };
 
-    // Handle filters from searchParams.filters object
-    if (searchParams.filters) {
-        if (searchParams.filters.status !== undefined && searchParams.filters.status !== "") {
-            body.filters.status = searchParams.filters.status.toString();
+        // Handle filters from searchParams.filters object
+        if (searchParams.filters) {
+            if (searchParams.filters.status !== undefined && searchParams.filters.status !== "") {
+                body.filters.status = searchParams.filters.status.toString();
+            }
         }
-    }
 
-    // Also support direct status parameter for backward compatibility
-    if (searchParams.status !== undefined && searchParams.status !== "") {
-        body.filters.status = searchParams.status.toString();
-    }
+        // Also support direct status parameter for backward compatibility
+        if (searchParams.status !== undefined && searchParams.status !== "") {
+            body.filters.status = searchParams.status.toString();
+        }
 
         const res = await api.post("/Area/Areas", body);
         return res?.data?.data ?? res?.data ?? { items: [], totalCount: 0 };
@@ -44,11 +44,11 @@ export const getAreas = async (searchParams = {}) => {
 export const createArea = async (data) => {
     try {
         const body = {
-            AreaName: data.areaName,
-            AreaCode: data.areaCode,
-            Description: data.description,
-            StorageConditionId: data.storageConditionId,
-            Status: data.status,
+            areaName: data.areaName,
+            areaCode: data.areaCode,
+            description: data.description,
+            storageConditionId: data.storageConditionId,
+            status: data.status,
         };
 
         const res = await api.post("/Area/Create", body);
@@ -56,8 +56,7 @@ export const createArea = async (data) => {
         return res.data;
     } catch (error) {
         console.error("Error creating Area:", error);
-        if (error.response && error.response.data && error.response.data.message) {
-            // Trả lại message lỗi từ BE
+        if (error.response?.data?.message) {
             throw new Error(error.response.data.message);
         }
         throw error;

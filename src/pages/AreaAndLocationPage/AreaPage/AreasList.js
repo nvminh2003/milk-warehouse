@@ -1,7 +1,8 @@
-import React, { useEffect, useState, useCallback, useRef } from "react";
-import { Button, Space, Tag, Form, message } from "antd";
+import React, { useEffect, useState, useRef } from "react";
+import { Button, Form, message } from "antd";
 import { getAreas, createArea, updateArea, deleteArea } from "../../../services/AreaServices";
-import { Edit, Trash2, Search, Filter, ChevronDown, Plus } from "lucide-react";
+import { getStorageCondition } from "../../../services/StorageConditionService";
+import { Edit, Trash2, ChevronDown, Plus } from "lucide-react";
 import DeleteModal from "../../../components/Common/DeleteModal";
 import SearchBar from "../../../components/Common/SearchBar";
 import FilterDropdown from "../../../components/Common/FilterDropdown";
@@ -14,6 +15,7 @@ import { extractErrorMessage } from "../../../utils/Validation";
 
 const AreaLists = () => {
     const [areas, setAreas] = useState([]);
+    const [storageConditions, setStorageConditions] = useState([]);
     const [loading, setLoading] = useState(false);
     const [form] = Form.useForm();
     const [pagination, setPagination] = useState({
@@ -68,6 +70,28 @@ const AreaLists = () => {
         fetchAreas(pagination.current, pagination.pageSize);
     }, []);
 
+    useEffect(() => {
+        const fetchStorageCondition = async () => {
+            try {
+                const data = await getStorageCondition();
+                console.log("Fetch storageCondition: ", data)
+                setStorageConditions(data?.data?.items || []);
+            } catch {
+                message.error("Không thể tải danh sách khu vực!");
+            }
+        };
+        fetchStorageCondition();
+    }, []);
+
+    useEffect(() => {
+        if (showUpdateModal && editingArea && storageConditions.length > 0) {
+            form.setFieldsValue({
+                storageConditionId: Number(editingArea.storageConditionId),
+            });
+        }
+    }, [showUpdateModal, storageConditions]);
+
+
     // Search input change handler
     const handleSearchInputChange = (e) => {
         const value = e.target.value;
@@ -81,7 +105,7 @@ const AreaLists = () => {
         const timeoutId = setTimeout(() => {
             fetchAreas(1, pagination.pageSize, {
                 search: searchQuery || "",
-                filters: { 
+                filters: {
                     status: statusFilter ? Number(statusFilter) : undefined
                 }
             });
@@ -96,7 +120,7 @@ const AreaLists = () => {
         setStatusFilter(status);
         fetchAreas(1, pagination.pageSize, {
             search: searchQuery,
-            filters: { 
+            filters: {
                 status: status ? Number(status) : undefined
             }
         });
@@ -107,7 +131,7 @@ const AreaLists = () => {
         setStatusFilter("");
         fetchAreas(1, pagination.pageSize, {
             search: searchQuery,
-            filters: { 
+            filters: {
                 status: undefined
             }
         });
@@ -119,7 +143,7 @@ const AreaLists = () => {
         setPagination(prev => ({ ...prev, current: newPage }));
         fetchAreas(newPage, pagination.pageSize, {
             search: searchQuery,
-            filters: { 
+            filters: {
                 status: statusFilter ? Number(statusFilter) : undefined
             }
         });
@@ -129,7 +153,7 @@ const AreaLists = () => {
         setPagination(prev => ({ ...prev, pageSize: newPageSize, current: 1 }));
         fetchAreas(1, newPageSize, {
             search: searchQuery,
-            filters: { 
+            filters: {
                 status: statusFilter ? Number(statusFilter) : undefined
             }
         });
@@ -145,14 +169,17 @@ const AreaLists = () => {
         }
     };
 
-    //Mở modal thêm mới
+    // Mở modal thêm mới
     const handleOpenCreate = () => {
         form.resetFields();
+        form.setFieldsValue({ status: 1 });
         setShowCreateModal(true);
     };
 
-    //Mở modal sửa
+    // Mở modal sửa
     const handleOpenEdit = (record) => {
+        console.log(">>> storageConditions hiện có:", storageConditions);
+        console.log(">>> record.storageConditionId:", record.storageConditionId);
         setEditingArea(record);
         form.setFieldsValue({
             areaName: record.areaName,
@@ -182,7 +209,7 @@ const AreaLists = () => {
             setShowCreateModal(false);
             fetchAreas(pagination.current, pagination.pageSize, {
                 search: searchQuery,
-                filters: { 
+                filters: {
                     status: statusFilter ? Number(statusFilter) : undefined
                 }
             });
@@ -211,7 +238,7 @@ const AreaLists = () => {
             setShowUpdateModal(false);
             fetchAreas(pagination.current, pagination.pageSize, {
                 search: searchQuery,
-                filters: { 
+                filters: {
                     status: statusFilter ? Number(statusFilter) : undefined
                 }
             });
@@ -222,21 +249,35 @@ const AreaLists = () => {
         }
     };
 
-    //Xóa khu vực
+    // Xóa khu vực
     const handleDeleteConfirm = async () => {
         try {
             await deleteArea(itemToDelete?.areaId);
-            window.showToast(`Đã xóa khu vực: ${itemToDelete?.areaCode || ""}`, "success");
+            window.showToast(
+                `Đã xóa khu vực: ${itemToDelete?.areaCode || ""}`,
+                "success"
+            );
+
             setShowDeleteModal(false);
             setItemToDelete(null);
+
             fetchAreas(pagination.current, pagination.pageSize, {
                 search: searchQuery,
-                filters: { 
-                    status: statusFilter ? Number(statusFilter) : undefined
-                }
+                filters: {
+                    status: statusFilter ? Number(statusFilter) : undefined,
+                },
             });
         } catch (error) {
-            window.showToast("Có lỗi xảy ra khi xóa khu vực", "error");
+            console.error("Error deleting area:", error);
+
+            // Lấy thông báo lỗi rõ ràng từ backend (nếu có)
+            const cleanMsg =
+                error?.response?.data?.message?.replace(/^\[.*?\]\s*/, "") ||
+                error?.message ||
+                "Có lỗi xảy ra khi xóa khu vực!";
+
+            // Hiển thị lỗi chi tiết
+            window.showToast(cleanMsg, "error");
         }
     };
 
@@ -342,9 +383,9 @@ const AreaLists = () => {
                                             <TableHead style={{ fontWeight: "600", color: "white", padding: "12px 16px", border: 0 }}>
                                                 Tên khu vực
                                             </TableHead>
-                                            <TableHead style={{ fontWeight: "600", color: "white", padding: "12px 16px", border: 0 }}>
+                                            {/* <TableHead style={{ fontWeight: "600", color: "white", padding: "12px 16px", border: 0 }}>
                                                 Điều kiện lưu trữ
-                                            </TableHead>
+                                            </TableHead> */}
                                             <TableHead style={{ fontWeight: "600", color: "white", padding: "12px 16px", border: 0 }}>
                                                 Mô tả
                                             </TableHead>
@@ -391,11 +432,11 @@ const AreaLists = () => {
                                                     <TableCell style={{ color: "#374151", padding: "12px 16px", border: 0 }}>
                                                         {area?.areaName || "—"}
                                                     </TableCell>
-                                                    <TableCell style={{ color: "#374151", padding: "12px 16px", border: 0 }}>
+                                                    {/* <TableCell style={{ color: "#374151", padding: "12px 16px", border: 0 }}>
                                                         {area?.storageConditionId || "—"}
-                                                    </TableCell>
+                                                    </TableCell> */}
                                                     <TableCell style={{ color: "#374151", padding: "12px 16px", border: 0 }}>
-                                                        {area?.description?.length > 50 ? area.description.slice(0, 50) + "..." : area?.description || "—"}
+                                                        {area?.description?.length > 30 ? area.description.slice(0, 30) + "..." : area?.description || "—"}
                                                     </TableCell>
                                                     <TableCell style={{ color: "#374151", padding: "12px 16px", border: 0, textAlign: "center" }}>
                                                         <span style={{
@@ -467,6 +508,7 @@ const AreaLists = () => {
                 onSubmit={handleCreateSubmit}
                 form={form}
                 loading={loading}
+                storageConditions={storageConditions}
             />
 
             {/* Update Area Modal */}
@@ -476,6 +518,7 @@ const AreaLists = () => {
                 onSubmit={handleUpdateSubmit}
                 form={form}
                 loading={loading}
+                storageConditions={storageConditions}
             />
 
             <DeleteModal

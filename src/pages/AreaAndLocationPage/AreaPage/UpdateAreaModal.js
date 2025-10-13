@@ -1,5 +1,5 @@
 import React from "react";
-import { Modal, Form, Divider, Row, Col, Input, InputNumber, Select } from "antd";
+import { Modal, Form, Divider, Row, Col, Input, Select } from "antd";
 import { ThunderboltOutlined } from "@ant-design/icons";
 
 const { Option } = Select;
@@ -9,6 +9,7 @@ const UpdateAreaModal = ({
     onCancel,
     onSubmit,
     form,
+    storageConditions = [],
     loading = false
 }) => {
     return (
@@ -38,7 +39,11 @@ const UpdateAreaModal = ({
                     <Col span={12}>
                         <Form.Item
                             name="areaName"
-                            label="Tên khu vực"
+                            label={
+                                <span>
+                                    Tên khu vực <span style={{ color: "red" }}>*</span>
+                                </span>
+                            }
                             rules={[{ required: true, message: "Vui lòng nhập tên khu vực" }]}
                         >
                             <Input placeholder="VD: Khu A" />
@@ -47,7 +52,11 @@ const UpdateAreaModal = ({
                     <Col span={12}>
                         <Form.Item
                             name="areaCode"
-                            label="Mã khu vực"
+                            label={
+                                <span>
+                                    Mã khu vực <span style={{ color: "red" }}>*</span>
+                                </span>
+                            }
                             rules={[{ required: true, message: "Vui lòng nhập mã khu vực" }]}
                         >
                             <Input placeholder="VD: A1" />
@@ -59,24 +68,45 @@ const UpdateAreaModal = ({
                     <Col span={12}>
                         <Form.Item
                             name="storageConditionId"
-                            label="Điều kiện lưu trữ"
-                            rules={[{ required: true, message: "Vui lòng nhập ID điều kiện lưu trữ" }]}
+                            label={
+                                <span>
+                                    Điều kiện bảo quản <span style={{ color: "red" }}>*</span>
+                                </span>
+                            }
+                            rules={[{ required: true, message: "Vui lòng chọn điều kiện bảo quản" }]}
                         >
-                            <InputNumber 
-                                placeholder="VD: 1" 
-                                style={{ width: "100%" }}
-                                min={1}
-                            />
+                            <Select
+                                placeholder="Chọn điều kiện bảo quản"
+                                allowClear
+                                showSearch
+                                optionFilterProp="children"
+                                loading={!storageConditions || storageConditions.length === 0}
+                            >
+                                {Array.isArray(storageConditions) && storageConditions.length > 0 ? (
+                                    storageConditions.map((storage) => (
+                                        <Option key={storage.storageConditionId} value={storage.storageConditionId}>
+                                            {`- Nhiệt độ: ${storage.temperatureMin}°C đến ${storage.temperatureMax}°C - Độ ẩm: ${storage.humidityMin}% đến ${storage.humidityMax}%`}
+                                        </Option>
+                                    ))
+                                ) : (
+                                    <Option disabled>Không thể tải danh sách điều kiện bảo quản</Option>
+                                )}
+                            </Select>
                         </Form.Item>
                     </Col>
+
                     <Col span={12}>
                         <Form.Item
                             name="status"
-                            label="Trạng thái"
+                            label={
+                                <span>
+                                    Trạng thái <span style={{ color: "red" }}>*</span>
+                                </span>
+                            }
                             rules={[{ required: true, message: "Vui lòng chọn trạng thái" }]}
                         >
-                            <Select 
-                                placeholder="Chọn trạng thái" 
+                            <Select
+                                placeholder="Chọn trạng thái"
                                 suffixIcon={<ThunderboltOutlined />}
                             >
                                 <Option value={1}>Hoạt động</Option>
@@ -89,10 +119,15 @@ const UpdateAreaModal = ({
 
                 <Row>
                     <Col span={24}>
-                        <Form.Item name="description" label="Mô tả">
-                            <Input.TextArea 
-                                rows={3} 
-                                placeholder="Nhập mô tả khu vực (nếu có)" 
+                        <Form.Item name="description"
+                            label={
+                                <span>
+                                    Mô tả <span style={{ color: "red" }}>*</span>
+                                </span>
+                            }>
+                            <Input.TextArea
+                                rows={3}
+                                placeholder="Nhập mô tả khu vực (nếu có)"
                             />
                         </Form.Item>
                     </Col>
