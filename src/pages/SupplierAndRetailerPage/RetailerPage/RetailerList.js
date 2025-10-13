@@ -308,10 +308,8 @@ export default function RetailersPage() {
 
   const handleSort = (field) => {
     if (sortField === field) {
-      // Nếu đang sort field này, đảo ngược thứ tự
       setSortAscending(!sortAscending)
     } else {
-      // Nếu chưa sort field này, set field mới và mặc định ascending
       setSortField(field)
       setSortAscending(true)
     }

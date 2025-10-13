@@ -21,6 +21,18 @@ export const getSuppliers = async (searchParams = {}) => {
     }
 };
 
+export const getSuppliersDropdown = async () => {
+    try {
+        const res = await api.get("/Supplier/GetSupplierDropDown");
+        console.log("Supplier API response:", res.data);
+
+        return res.data;
+    } catch (error) {
+        console.error("Error fetching suppliers:", error);
+        return { data: [], totalCount: 0 };
+    }
+};
+
 export const getSupplierDetail = async (supplierId) => {
     try {
         const res = await api.get(`/Supplier/GetSupplierBySupplierId/${supplierId}`);
@@ -64,6 +76,21 @@ export const deleteSupplier = async (supplierId) => {
         return res.data;
     } catch (error) {
         console.error("Error deleting supplier:", error);
+        throw error;
+    }
+};
+
+// Update supplier status
+export const updateSupplierStatus = async (supplierId, status) => {
+    try {
+        const res = await api.put('/Supplier/UpdateStatus', { 
+            SupplierId: supplierId,
+            Status: status 
+        });
+        console.log("Update supplier status response:", res.data);
+        return res.data;
+    } catch (error) {
+        console.error("Error updating supplier status:", error);
         throw error;
     }
 };

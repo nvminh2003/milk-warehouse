@@ -7,7 +7,7 @@ import { Card } from "../../components/ui/card"
 import { X } from "lucide-react"
 import { createGood } from "../../services/GoodService"
 import { getCategory } from "../../services/CategoryService/CategoryServices"
-import { getSuppliers } from "../../services/SupplierService"
+import { getSuppliersDropdown } from "../../services/SupplierService"
 import { getStorageCondition } from "../../services/StorageConditionService"
 import { getUnitMeasure } from "../../services/UnitMeasureService"
 import { validateAndShowError, extractErrorMessage } from "../../utils/Validation"
@@ -39,16 +39,17 @@ export default function CreateGood({ isOpen, onClose, onSuccess }) {
     try {
       setLoadingData(true)
       const [categoriesRes, suppliersRes, storageConditionsRes, unitMeasuresRes] = await Promise.all([
-        getCategory({ pageNumber: 1, pageSize: 1000 }),
-        getSuppliers({ pageNumber: 1, pageSize: 1000 }),
-        getStorageCondition({ pageNumber: 1, pageSize: 1000 }),
-        getUnitMeasure({ pageNumber: 1, pageSize: 1000 })
+        getCategory({ pageNumber: 1, pageSize: 10 }),
+        getSuppliersDropdown(),
+        getStorageCondition({ pageNumber: 1, pageSize: 10 }),
+        getUnitMeasure({ pageNumber: 1, pageSize: 10 })
       ])
 
-      setCategories(categoriesRes?.data?.items || [])
-      setSuppliers(suppliersRes?.data?.items || [])
-      setStorageConditions(storageConditionsRes?.data?.items || [])
-      setUnitMeasures(unitMeasuresRes?.data?.items || [])
+      // Handle different response structures
+      setCategories(categoriesRes?.data?.items || categoriesRes?.data || [])
+      setSuppliers(suppliersRes?.data?.items || suppliersRes?.data || [])
+      setStorageConditions(storageConditionsRes?.data?.items || storageConditionsRes?.data || [])
+      setUnitMeasures(unitMeasuresRes?.data?.items || unitMeasuresRes?.data || [])
     } catch (error) {
       console.error("Error loading dropdown data:", error)
       const errorMessage = extractErrorMessage(error, "Lỗi khi tải dữ liệu dropdown")

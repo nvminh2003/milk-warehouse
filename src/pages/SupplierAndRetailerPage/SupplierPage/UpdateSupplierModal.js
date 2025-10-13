@@ -6,6 +6,7 @@ import { Card } from "../../../components/ui/card"
 import { X } from "lucide-react"
 import { updateSupplier, getSupplierDetail } from "../../../services/SupplierService"
 import { validateAndShowError, extractErrorMessage } from "../../../utils/Validation"
+import { DisableFieldWrapper } from "../../../components/Common/DisableFieldWrapper"
 
 export default function UpdateSupplierModal({ isOpen, onClose, onSuccess, supplierId }) {
   const [formData, setFormData] = useState({
@@ -16,7 +17,7 @@ export default function UpdateSupplierModal({ isOpen, onClose, onSuccess, suppli
     email: "",
     address: "",
     phone: "",
-    status: 0,
+    isDisable: false,
   })
   const [loading, setLoading] = useState(false)
   const [loadingData, setLoadingData] = useState(false)
@@ -33,11 +34,11 @@ export default function UpdateSupplierModal({ isOpen, onClose, onSuccess, suppli
       setLoadingData(true)
       const response = await getSupplierDetail(supplierId)
       console.log("API Response:", response);
-      
+
       // API trả về { data: {...}, message: "", status: 200, success: true }
       const supplierInfo = response.data || response;
       console.log("Supplier Info:", supplierInfo);
-      
+
       if (supplierInfo) {
         setFormData({
           supplierId: supplierInfo.supplierId || 0,
@@ -47,7 +48,7 @@ export default function UpdateSupplierModal({ isOpen, onClose, onSuccess, suppli
           email: supplierInfo.email || "",
           address: supplierInfo.address || "",
           phone: supplierInfo.phone || "",
-          status: supplierInfo.status || 0,
+          isDisable: supplierInfo.isDisable || false,
         })
       }
     } catch (error) {
@@ -61,10 +62,10 @@ export default function UpdateSupplierModal({ isOpen, onClose, onSuccess, suppli
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     // Basic validation - check if required fields are filled
-    if (!formData.companyName?.trim() || !formData.brandName?.trim() || !formData.taxCode?.trim() || 
-        !formData.email?.trim() || !formData.address?.trim() || !formData.phone?.trim()) {
+    if (!formData.companyName?.trim() || !formData.brandName?.trim() || !formData.taxCode?.trim() ||
+      !formData.email?.trim() || !formData.address?.trim() || !formData.phone?.trim()) {
       window.showToast("Vui lòng điền đầy đủ thông tin", "error")
       return
     }
@@ -114,7 +115,7 @@ export default function UpdateSupplierModal({ isOpen, onClose, onSuccess, suppli
       email: "",
       address: "",
       phone: "",
-      status: 0,
+      isDisable: false,
     })
     onClose && onClose()
   }
@@ -134,42 +135,57 @@ export default function UpdateSupplierModal({ isOpen, onClose, onSuccess, suppli
             <X className="h-5 w-5 text-gray-500" />
           </button>
         </div>
-        
+
         {/* Content */}
         <div className="p-6">
           <form className="space-y-6" onSubmit={handleSubmit}>
             {/* Row 1: Company Name & Brand Name */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="companyName" className="text-sm font-medium text-slate-700">
-                  Tên công ty *
-                </Label>
-                <Input
-                  id="companyName"
-                  placeholder="Nhập tên công ty..."
-                  value={formData.companyName}
-                  onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-                  className="h-12 border-slate-300 focus:border-[#237486] focus:ring-[#237486]"
-                  required
-                />
-              </div>
+              <DisableFieldWrapper
+                isDisabled={formData.isDisable}
+                label="Tên công ty"
+                id="companyName"
+                placeholder="Nhập tên công ty..."
+                value={formData.companyName}
+                onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                required
+              />
 
-              <div className="space-y-2">
-                <Label htmlFor="brandName" className="text-sm font-medium text-slate-700">
-                  Tên thương hiệu *
-                </Label>
-                <Input
-                  id="brandName"
-                  placeholder="Nhập tên thương hiệu..."
-                  value={formData.brandName}
-                  onChange={(e) => setFormData({ ...formData, brandName: e.target.value })}
-                  className="h-12 border-slate-300 focus:border-[#237486] focus:ring-[#237486]"
-                  required
-                />
-              </div>
+              <DisableFieldWrapper
+                isDisabled={formData.isDisable}
+                label="Tên thương hiệu"
+                id="brandName"
+                placeholder="Nhập tên thương hiệu..."
+                value={formData.brandName}
+                onChange={(e) => setFormData({ ...formData, brandName: e.target.value })}
+                required
+              />
             </div>
 
-            {/* Row 2: Email & Phone */}
+            {/* Row 2: Tax Code & Address */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <DisableFieldWrapper
+                isDisabled={formData.isDisable}
+                label="Mã số thuế"
+                id="taxCode"
+                placeholder="Nhập mã số thuế..."
+                value={formData.taxCode}
+                onChange={(e) => setFormData({ ...formData, taxCode: e.target.value })}
+                required
+              />
+
+              <DisableFieldWrapper
+                isDisabled={formData.isDisable}
+                label="Địa chỉ"
+                id="address"
+                placeholder="Nhập địa chỉ..."
+                value={formData.address}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                required
+              />
+            </div>
+
+            {/* Row 3: Email & Phone */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-medium text-slate-700">
@@ -198,57 +214,6 @@ export default function UpdateSupplierModal({ isOpen, onClose, onSuccess, suppli
                   className="h-12 border-slate-300 focus:border-[#237486] focus:ring-[#237486]"
                   required
                 />
-              </div>
-            </div>
-
-            {/* Row 3: Tax Code & Address */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="taxCode" className="text-sm font-medium text-slate-700">
-                  Mã số thuế *
-                </Label>
-                <Input
-                  id="taxCode"
-                  placeholder="Nhập mã số thuế..."
-                  value={formData.taxCode}
-                  onChange={(e) => setFormData({ ...formData, taxCode: e.target.value })}
-                  className="h-12 border-slate-300 focus:border-[#237486] focus:ring-[#237486]"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="address" className="text-sm font-medium text-slate-700">
-                  Địa chỉ *
-                </Label>
-                <Input
-                  id="address"
-                  placeholder="Nhập địa chỉ..."
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  className="h-12 border-slate-300 focus:border-[#237486] focus:ring-[#237486]"
-                  required
-                />
-              </div>
-            </div>
-
-            {/* Row 4: Status */}
-            <div className="grid grid-cols-1 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="status" className="text-sm font-medium text-slate-700">
-                  Trạng thái *
-                </Label>
-                <select
-                  id="status"
-                  value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: parseInt(e.target.value) })}
-                  className="h-12 w-full px-3 py-2 border border-slate-300 rounded-md focus:border-[#237486] focus:ring-[#237486] focus:outline-none bg-white"
-                  required
-                >
-                  <option value={0}>Chọn trạng thái...</option>
-                  <option value={1}>Hoạt động</option>
-                  <option value={2}>Ngừng hoạt động</option>
-                </select>
               </div>
             </div>
 
