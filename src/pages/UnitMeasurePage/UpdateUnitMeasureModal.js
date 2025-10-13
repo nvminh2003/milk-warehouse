@@ -6,7 +6,7 @@ import { Label } from "../../components/ui/label"
 import { Card } from "../../components/ui/card"
 import { X } from "lucide-react"
 import { updateUnitMeasure } from "../../services/UnitMeasureService"
-import { validateAndShowError } from "../../utils/Validation"
+import { validateAndShowError, extractErrorMessage } from "../../utils/Validation"
 
 export default function UpdateUnitMeasure({ isOpen, onClose, onSuccess, unitMeasureData }) {
   const [formData, setFormData] = useState({
@@ -73,13 +73,8 @@ export default function UpdateUnitMeasure({ isOpen, onClose, onSuccess, unitMeas
       onClose && onClose()
     } catch (error) {
       console.error("Error updating unit measure:", error)
-
-      // Show specific error message from API
-      if (error.response && error.response.data && error.response.data.message) {
-        window.showToast(`Lỗi: ${error.response.data.message}`, "error")
-      } else {
-        window.showToast("Có lỗi xảy ra khi cập nhật đơn vị đo", "error")
-      }
+      const cleanMsg = extractErrorMessage(error, "Có lỗi xảy ra khi cập nhật đơn vị đo")
+      window.showToast(`Lỗi: ${cleanMsg}`, "error")
     } finally {
       setLoading(false)
     }

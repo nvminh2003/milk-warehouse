@@ -6,7 +6,7 @@ import { Label } from "../../components/ui/label"
 import { Card } from "../../components/ui/card"
 import { X } from "lucide-react"
 import { updateCategory } from "../../services/CategoryService/CategoryServices"
-import { validateAndShowError } from "../../utils/Validation"
+import { validateAndShowError, extractErrorMessage } from "../../utils/Validation"
 
 export default function UpdateCategory({ isOpen, onClose, onSuccess, categoryData }) {
   const [formData, setFormData] = useState({
@@ -73,13 +73,8 @@ export default function UpdateCategory({ isOpen, onClose, onSuccess, categoryDat
       onClose && onClose()
     } catch (error) {
       console.error("Error updating category:", error)
-
-      // Show specific error message from API
-      if (error.response && error.response.data && error.response.data.message) {
-        window.showToast(`Lỗi: ${error.response.data.message}`, "error")
-      } else {
-        window.showToast("Có lỗi xảy ra khi cập nhật danh mục", "error")
-      }
+      const cleanMsg = extractErrorMessage(error, "Có lỗi xảy ra khi cập nhật danh mục")
+      window.showToast(`Lỗi: ${cleanMsg}`, "error")
     } finally {
       setLoading(false)
     }

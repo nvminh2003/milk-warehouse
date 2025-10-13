@@ -9,6 +9,7 @@ import CreateGood from "./CreateGoodModal";
 import UpdateGoodModal from "./UpdateGoodModal";
 import DeleteModal from "../../components/Common/DeleteModal";
 import { ProductDetail } from "./ViewGoodModal";
+import { extractErrorMessage } from "../../utils/Validation";
 
 // Type definition for Good
 const Good = {
@@ -76,6 +77,8 @@ export default function GoodsPage() {
       }
     } catch (error) {
       console.error("Error fetching goods:", error)
+      const errorMessage = extractErrorMessage(error, "Có lỗi xảy ra khi tải danh sách hàng hóa")
+      window.showToast(errorMessage, "error")
       setGoods([])
       setPagination(prev => ({ ...prev, totalCount: 0 }))
     } finally {
@@ -200,7 +203,8 @@ export default function GoodsPage() {
       }
     } catch (error) {
       console.error("Error fetching good detail:", error)
-      window.showToast("Có lỗi xảy ra khi tải chi tiết hàng hóa", "error")
+      const errorMessage = extractErrorMessage(error, "Có lỗi xảy ra khi tải chi tiết hàng hóa")
+      window.showToast(errorMessage, "error")
       setShowViewModal(false)
     } finally {
       setLoadingDetail(false)
@@ -249,12 +253,9 @@ export default function GoodsPage() {
     } catch (error) {
       console.error("Error deleting good:", error)
 
-      // Show specific error message from API
-      if (error.response && error.response.data && error.response.data.message) {
-        window.showToast(`Lỗi: ${error.response.data.message}`, "error")
-      } else {
-        window.showToast("Có lỗi xảy ra khi xóa hàng hóa", "error")
-      }
+      // Sử dụng extractErrorMessage để xử lý lỗi từ API
+      const errorMessage = extractErrorMessage(error, "Có lỗi xảy ra khi xóa hàng hóa")
+      window.showToast(`Lỗi: ${errorMessage}`, "error")
     }
   }
 

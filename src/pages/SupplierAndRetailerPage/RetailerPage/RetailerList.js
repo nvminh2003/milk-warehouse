@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { getRetailers, getRetailerDetail } from "../../../services/RetailerService";
+import { getRetailers, getRetailerDetail, deleteRetailer } from "../../../services/RetailerService";
 import { Card, CardContent } from "../../../components/ui/card";
 import { Input } from "../../../components/ui/input";
 import { Button } from "../../../components/ui/button";
@@ -7,8 +7,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Search, Plus, Edit, Trash2, Filter, ChevronDown, Eye } from "lucide-react";
 import { RetailerDetail } from "./ViewRetailerModal";
 import DeleteModal from "../../../components/Common/DeleteModal";
-// import CreateSupplier from "./CreateSupplierModal";
-// import UpdateSupplier from "./UpdateSupplierModal";
+import CreateRetailer from "./CreateRetailerModal";
+import UpdateRetailerModal from "./UpdateRetailerModal";
+import { extractErrorMessage } from "../../../utils/Validation";
 
 // Type definition for Retailer
 const Retailer = {
@@ -35,6 +36,7 @@ export default function RetailersPage() {
   const [showViewModal, setShowViewModal] = useState(false)
   const [itemToDelete, setItemToDelete] = useState(null)
   const [itemToUpdate, setItemToUpdate] = useState(null)
+  const [updateRetailerId, setUpdateRetailerId] = useState(null)
   const [itemToView, setItemToView] = useState(null)
   const [retailerDetail, setRetailerDetail] = useState(null)
   const [loadingDetail, setLoadingDetail] = useState(false)
@@ -208,6 +210,7 @@ export default function RetailersPage() {
 
   const handleUpdateClick = (retailer) => {
     setItemToUpdate(retailer)
+    setUpdateRetailerId(retailer.retailerId)
     setShowUpdateModal(true)
   }
 
@@ -219,7 +222,7 @@ export default function RetailersPage() {
   const handleDeleteConfirm = async () => {
     try {
       console.log("Deleting retailer:", itemToDelete)
-      // await deleteRetailer(itemToDelete?.retailerId) // Cần thêm API delete
+      await deleteRetailer(itemToDelete?.retailerId)
       window.showToast(`Đã xóa nhà bán lẻ: ${itemToDelete?.retailerName || ''}`, "success")
       setShowDeleteModal(false)
       setItemToDelete(null)
@@ -247,18 +250,30 @@ export default function RetailersPage() {
     } catch (error) {
       console.error("Error deleting retailer:", error)
 
-      // Show specific error message from API
-      if (error.response && error.response.data && error.response.data.message) {
-        window.showToast(`Lỗi: ${error.response.data.message}`, "error")
-      } else {
-        window.showToast("Có lỗi xảy ra khi xóa nhà bán lẻ", "error")
-      }
+      const errorMessage = extractErrorMessage(error, "Có lỗi xảy ra khi xóa nhà bán lẻ")
+      window.showToast(errorMessage, "error")
     }
   }
 
   const handleUpdateCancel = () => {
     setShowUpdateModal(false)
     setItemToUpdate(null)
+    setUpdateRetailerId(null)
+  }
+
+  const handleUpdateSuccess = () => {
+    // Refresh data after successful update
+    fetchData({
+      pageNumber: pagination.pageNumber,
+      pageSize: pagination.pageSize,
+      search: searchQuery || "",
+      sortField: sortField,
+      sortAscending: sortAscending,
+      status: statusFilter
+    })
+    setShowUpdateModal(false)
+    setItemToUpdate(null)
+    setUpdateRetailerId(null)
   }
 
   const handleDeleteCancel = () => {
@@ -609,20 +624,20 @@ export default function RetailersPage() {
         )}
       </div>
 
-      {/* Create Supplier Modal */}
-      {/* <CreateSupplier
+      {/* Create Retailer Modal */}
+      <CreateRetailer
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onSuccess={handleCreateSuccess}
-      /> */}
+      />
 
-      {/* Update Retailer Modal - Tạm thời tắt vì chưa có component */}
-      {/* <UpdateRetailer
+      {/* Update Retailer Modal */}
+      <UpdateRetailerModal
         isOpen={showUpdateModal}
         onClose={handleUpdateCancel}
-        onSuccess={handleCreateSuccess}
-        retailerData={itemToUpdate}
-      /> */}
+        onSuccess={handleUpdateSuccess}
+        retailerId={updateRetailerId}
+      />
 
       {/* Delete Confirmation Modal */}
       <DeleteModal

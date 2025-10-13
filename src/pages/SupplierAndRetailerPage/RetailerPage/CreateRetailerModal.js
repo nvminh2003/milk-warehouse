@@ -5,17 +5,16 @@ import { Input } from "../../../components/ui/input"
 import { Label } from "../../../components/ui/label"
 import { Card } from "../../../components/ui/card"
 import { X } from "lucide-react"
-import { createSupplier } from "../../../services/SupplierService"
+import { createRetailer } from "../../../services/RetailerService"
 import { validateAndShowError, extractErrorMessage } from "../../../utils/Validation"
 
-export default function CreateSupplier({ isOpen, onClose, onSuccess }) {
+export default function CreateRetailer({ isOpen, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
-    companyName: "",
-    brandName: "",
-    email: "",
-    phone: "",
+    retailerName: "",
     taxCode: "",
+    email: "",
     address: "",
+    phone: "",
   })
   const [loading, setLoading] = useState(false)
 
@@ -23,9 +22,8 @@ export default function CreateSupplier({ isOpen, onClose, onSuccess }) {
     e.preventDefault()
     
     // Basic validation - check if required fields are filled
-    if (!formData.companyName?.trim() || !formData.brandName?.trim() || 
-        !formData.email?.trim() || !formData.phone?.trim() || 
-        !formData.taxCode?.trim() || !formData.address?.trim()) {
+    if (!formData.retailerName?.trim() || !formData.taxCode?.trim() || 
+        !formData.email?.trim() || !formData.address?.trim() || !formData.phone?.trim()) {
       window.showToast("Vui lòng điền đầy đủ thông tin", "error")
       return
     }
@@ -46,14 +44,14 @@ export default function CreateSupplier({ isOpen, onClose, onSuccess }) {
 
     try {
       setLoading(true)
-      const response = await createSupplier(formData)
-      console.log("Supplier created:", response)
-      window.showToast("Thêm nhà cung cấp thành công!", "success")
+      const response = await createRetailer(formData)
+      console.log("Retailer created:", response)
+      window.showToast("Thêm nhà bán lẻ thành công!", "success")
       onSuccess && onSuccess()
       onClose && onClose()
     } catch (error) {
-      console.error("Error creating supplier:", error)
-      const cleanMsg = extractErrorMessage(error, "Có lỗi xảy ra khi thêm nhà cung cấp")
+      console.error("Error creating retailer:", error)
+      const cleanMsg = extractErrorMessage(error, "Có lỗi xảy ra khi thêm nhà bán lẻ")
       window.showToast(cleanMsg, "error")
     } finally {
       setLoading(false)
@@ -62,12 +60,11 @@ export default function CreateSupplier({ isOpen, onClose, onSuccess }) {
 
   const handleReset = () => {
     setFormData({
-      companyName: "",
-      brandName: "",
-      email: "",
-      phone: "",
+      retailerName: "",
       taxCode: "",
+      email: "",
       address: "",
+      phone: "",
     })
     onClose && onClose()
   }
@@ -79,7 +76,7 @@ export default function CreateSupplier({ isOpen, onClose, onSuccess }) {
       <div className="w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto bg-white rounded-lg shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h1 className="text-2xl font-bold text-slate-800">Thêm nhà cung cấp mới</h1>
+          <h1 className="text-2xl font-bold text-slate-800">Thêm nhà bán lẻ mới</h1>
           <button
             onClick={onClose}
             className="p-1 hover:bg-gray-100 rounded-full transition-colors"
@@ -92,31 +89,31 @@ export default function CreateSupplier({ isOpen, onClose, onSuccess }) {
         <div className="p-6">
 
           <form className="space-y-6" onSubmit={handleSubmit}>
-            {/* Row 1: Company Name & Brand Name */}
+            {/* Row 1: Retailer Name & Tax Code */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="companyName" className="text-sm font-medium text-slate-700">
-                  Tên công ty *
+                <Label htmlFor="retailerName" className="text-sm font-medium text-slate-700">
+                  Tên nhà bán lẻ *
                 </Label>
                 <Input
-                  id="companyName"
-                  placeholder="Nhập tên công ty..."
-                  value={formData.companyName}
-                  onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                  id="retailerName"
+                  placeholder="Nhập tên nhà bán lẻ..."
+                  value={formData.retailerName}
+                  onChange={(e) => setFormData({ ...formData, retailerName: e.target.value })}
                   className="h-12 border-slate-300 focus:border-[#237486] focus:ring-[#237486]"
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="brandName" className="text-sm font-medium text-slate-700">
-                  Tên thương hiệu *
+                <Label htmlFor="taxCode" className="text-sm font-medium text-slate-700">
+                  Mã số thuế *
                 </Label>
                 <Input
-                  id="brandName"
-                  placeholder="Nhập tên thương hiệu..."
-                  value={formData.brandName}
-                  onChange={(e) => setFormData({ ...formData, brandName: e.target.value })}
+                  id="taxCode"
+                  placeholder="Nhập mã số thuế..."
+                  value={formData.taxCode}
+                  onChange={(e) => setFormData({ ...formData, taxCode: e.target.value })}
                   className="h-12 border-slate-300 focus:border-[#237486] focus:ring-[#237486]"
                   required
                 />
@@ -155,35 +152,19 @@ export default function CreateSupplier({ isOpen, onClose, onSuccess }) {
               </div>
             </div>
 
-            {/* Row 3: Tax Code & Address */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="taxCode" className="text-sm font-medium text-slate-700">
-                  Mã số thuế *
-                </Label>
-                <Input
-                  id="taxCode"
-                  placeholder="Nhập mã số thuế..."
-                  value={formData.taxCode}
-                  onChange={(e) => setFormData({ ...formData, taxCode: e.target.value })}
-                  className="h-12 border-slate-300 focus:border-[#237486] focus:ring-[#237486]"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="address" className="text-sm font-medium text-slate-700">
-                  Địa chỉ *
-                </Label>
-                <Input
-                  id="address"
-                  placeholder="Nhập địa chỉ..."
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  className="h-12 border-slate-300 focus:border-[#237486] focus:ring-[#237486]"
-                  required
-                />
-              </div>
+            {/* Row 3: Address - Full width */}
+            <div className="space-y-2">
+              <Label htmlFor="address" className="text-sm font-medium text-slate-700">
+                Địa chỉ *
+              </Label>
+              <Input
+                id="address"
+                placeholder="Nhập địa chỉ..."
+                value={formData.address}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                className="h-12 border-slate-300 focus:border-[#237486] focus:ring-[#237486]"
+                required
+              />
             </div>
 
             {/* Action Buttons */}

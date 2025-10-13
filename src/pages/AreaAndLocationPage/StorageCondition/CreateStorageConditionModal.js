@@ -6,7 +6,7 @@ import { Label } from "../../../components/ui/label"
 import { Card } from "../../../components/ui/card"
 import { X } from "lucide-react"
 import { createStorageCondition } from "../../../services/StorageConditionService"
-import { validateAndShowError } from "../../../utils/Validation"
+import { validateAndShowError, extractErrorMessage } from "../../../utils/Validation"
 
 export default function CreateStorageCondition({ isOpen, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
@@ -37,39 +37,8 @@ export default function CreateStorageCondition({ isOpen, onClose, onSuccess }) {
       onClose && onClose()
     } catch (error) {
       console.error("Error creating storage condition:", error)
-      
-      // Show specific error message from API
-      if (error.response && error.response.data) {
-        const errorData = error.response.data
-        console.log("Error data from backend:", errorData)
-        
-        // Handle different error response structures
-        if (errorData.message) {
-          window.showToast(errorData.message, "error")
-        } else if (errorData.error) {
-          window.showToast(errorData.error, "error")
-        } else if (errorData.errors) {
-          // Handle validation errors object (like { "TemperatureMax": ["error message"] })
-          if (typeof errorData.errors === 'object' && !Array.isArray(errorData.errors)) {
-            const errorMessages = Object.values(errorData.errors).flat().join(", ")
-            window.showToast(errorMessages, "error")
-          } else if (Array.isArray(errorData.errors)) {
-            // Handle validation errors array
-            const errorMessages = errorData.errors.map(err => err.message || err).join(", ")
-            window.showToast(errorMessages, "error")
-          } else {
-            window.showToast("Có lỗi xảy ra khi thêm điều kiện bảo quản", "error")
-          }
-        } else if (typeof errorData === 'string') {
-          window.showToast(errorData, "error")
-        } else {
-          window.showToast("Có lỗi xảy ra khi thêm điều kiện bảo quản", "error")
-        }
-      } else if (error.message) {
-        window.showToast(error.message, "error")
-      } else {
-        window.showToast("Có lỗi xảy ra khi thêm điều kiện bảo quản", "error")
-      }
+      const cleanMsg = extractErrorMessage(error, "Có lỗi xảy ra khi thêm điều kiện bảo quản")
+      window.showToast(cleanMsg, "error")
     } finally {
       setLoading(false)
     }

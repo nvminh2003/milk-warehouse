@@ -11,6 +11,7 @@ import CreateAreaModal from "./CreateAreaModal";
 import UpdateAreaModal from "./UpdateAreaModal";
 import { Card, CardContent } from "../../../components/ui/card";
 import { Table as CustomTable, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../../components/ui/table";
+import { extractErrorMessage } from "../../../utils/Validation";
 
 const AreaLists = () => {
     const [areas, setAreas] = useState([]);
@@ -214,10 +215,7 @@ const AreaLists = () => {
             });
         } catch (error) {
             console.error("Error creating area:", error);
-            const cleanMsg =
-                error?.response?.data?.message?.replace(/^\[.*?\]\s*/, "") ||
-                error?.message ||
-                "Có lỗi xảy ra, vui lòng thử lại!";
+            const cleanMsg = extractErrorMessage(error);
             window.showToast(cleanMsg, "error");
         }
     };
@@ -246,10 +244,7 @@ const AreaLists = () => {
             });
         } catch (error) {
             console.error("Error updating area:", error);
-            const cleanMsg =
-                error?.response?.data?.message?.replace(/^\[.*?\]\s*/, "") ||
-                error?.message ||
-                "Có lỗi xảy ra, vui lòng thử lại!";
+            const cleanMsg = extractErrorMessage(error);
             window.showToast(cleanMsg, "error");
         }
     };
@@ -334,7 +329,7 @@ const AreaLists = () => {
                     </Card>
                     <Card style={{ borderLeft: "4px solid #237486" }}>
                         <CardContent style={{ paddingTop: "24px" }}>
-                            <div style={{ fontSize: "14px", fontWeight: "500", color: "#64748b" }}>Không hoạt động</div>
+                            <div style={{ fontSize: "14px", fontWeight: "500", color: "#64748b" }}>Ngừng hoạt động</div>
                             <div style={{ fontSize: "30px", fontWeight: "bold", color: "#64748b", marginTop: "8px" }}>{inactiveCount}</div>
                         </CardContent>
                     </Card>
