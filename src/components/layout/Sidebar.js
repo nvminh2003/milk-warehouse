@@ -23,7 +23,8 @@ const Sidebar = ({ collapsed, isMobile }) => {
         if (savedUser) setUser(JSON.parse(savedUser));
     }, []);
 
-    const role = user?.roles?.[0] || "Guest";
+    const roleObj = user?.roles?.[0];
+    const role = typeof roleObj === "string" ? roleObj : roleObj?.roleName || roleObj?.role || "Guest";
 
     // màu trắng cho mũi tên dropdown
     const arrowWhiteStyle = `
