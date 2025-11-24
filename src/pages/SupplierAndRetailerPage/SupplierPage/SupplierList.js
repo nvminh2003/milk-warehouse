@@ -249,21 +249,21 @@ export default function SuppliersPage() {
   const handleStatusChange = async (supplierId, newStatus) => {
     try {
       await updateSupplierStatus(supplierId, newStatus)
-      
+
       // Update local state
-      setSuppliers(prevSuppliers => 
-        prevSuppliers.map(supplier => 
-          supplier.supplierId === supplierId 
+      setSuppliers(prevSuppliers =>
+        prevSuppliers.map(supplier =>
+          supplier.supplierId === supplierId
             ? { ...supplier, status: newStatus }
             : supplier
         )
       )
-      
+
       const statusText = newStatus === 1 ? "kích hoạt" : "ngừng hoạt động"
       window.showToast(`Đã ${statusText} nhà cung cấp thành công`, "success")
     } catch (error) {
       console.error("Error updating supplier status:", error)
-      
+
       // Sử dụng extractErrorMessage để xử lý lỗi nhất quán
       const errorMessage = extractErrorMessage(error, "Có lỗi xảy ra khi cập nhật trạng thái")
       window.showToast(errorMessage, "error")
@@ -383,15 +383,15 @@ export default function SuppliersPage() {
                           <div className="flex flex-col">
                             <ChevronDown
                               className={`h-3 w-3 transition-colors ${sortField === "companyName" && sortAscending
-                                  ? 'text-white'
-                                  : 'text-white/50'
+                                ? 'text-white'
+                                : 'text-white/50'
                                 }`}
                               style={{ transform: 'translateY(1px)' }}
                             />
                             <ChevronDown
                               className={`h-3 w-3 transition-colors ${sortField === "companyName" && !sortAscending
-                                  ? 'text-white'
-                                  : 'text-white/50'
+                                ? 'text-white'
+                                : 'text-white/50'
                                 }`}
                               style={{ transform: 'translateY(-1px) rotate(180deg)' }}
                             />
@@ -483,14 +483,14 @@ export default function SuppliersPage() {
                               >
                                 <Eye className="h-4 w-4 text-[#1a7b7b]" />
                               </button>
-                              <button 
+                              <button
                                 className="p-1 hover:bg-slate-100 rounded transition-colors"
                                 title="Chỉnh sửa"
                                 onClick={() => handleUpdateClick(supplier)}
                               >
                                 <Edit className="h-4 w-4 text-[#1a7b7b]" />
                               </button>
-                              <button 
+                              <button
                                 className="p-1 hover:bg-slate-100 rounded transition-colors"
                                 title="Xóa"
                                 onClick={() => handleDeleteClick(supplier)}
